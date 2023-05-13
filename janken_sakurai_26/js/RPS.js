@@ -63,13 +63,13 @@ function renderOpponentHand(){
 *****************************************************************/
 async function RPSMain(cvs) {
 	let sleep = time => new Promise(resolve => setTimeout(resolve, time));
+
 	const RPSstart01 = new Audio('./audio/SE/RPSstart_01.wav');
 	const RPSstart02 = new Audio('./audio/SE/RPSstart_02.wav');
 	const RPSstart03 = new Audio('./audio/SE/RPSstart_03.wav');
 	const RPSdraw01 = new Audio('./audio/SE/RPSdraw_01.wav');
 	const RPSdraw02 = new Audio('./audio/SE/RPSdraw_02.wav');
 	const RPSdraw03 = new Audio('./audio/SE/RPSdraw_03.wav');
-	// RPSstart.volume = 0.8
 
 	let falseStartDetect = () => {
 		if(winOrLoseFlag === 'falseStart'){
@@ -81,7 +81,8 @@ async function RPSMain(cvs) {
 	}
 
   //初期化
-	winOrLoseFlag = 9999;
+	renderChar.player.idleStop();
+	renderChar.opponent.idleStop();
 	await sleep(100);
 	initVariables();
 
@@ -207,7 +208,11 @@ function renderElapsedTime(cvs){
 		ctx.fillText(elapsedTime,340,30)
 		count ++;
 		if (count >= countMax || opponentHandResult !== null){
-			if(count >= countMax) winOrLoseFlag = 'timeout';
+			if(count >= countMax) {
+				winOrLoseFlag = 'timeout';
+				renderChar.player.idleStop();
+				renderChar.opponent.idleStop();
+			}
 			clearInterval(elapsedTimer);
 			resolve();
 		}
@@ -280,7 +285,9 @@ canvas[CANVAS_NUM].addEventListener("click", e => {
 
 		}else{
 			if((countTimerStart === null || drawFlag === true) && buttonFlag !== null){
-				winOrLoseFlag = 'falseStart'
+				winOrLoseFlag = 'falseStart';
+				renderChar.player.idleStop();
+				renderChar.opponent.idleStop();
 			}else if(buttonFlag !== null){
 				RPSJudge(buttonFlag);
 			}
@@ -345,6 +352,8 @@ function RPSJudge(myHand){
     drawFlag = true; //グローバル変数にドローフラグを設定
   } else  {
     winOrLoseFlag = wodJudge; //グローバル変数に勝敗を格納
+		renderChar.player.idleStop();
+		renderChar.opponent.idleStop();
   }
 
 }
@@ -467,8 +476,10 @@ function initVariables(){
 	opponentHandResult = null;
 	winOrLoseFlag = null;
 	drawFlag = null;
+	renderChar.player.idleStart();
+	renderChar.opponent.idleStart();
 	cvs.get('opponentHand').getContext("2d").clearRect(0,0,cvs.get('opponentHand').width,cvs.get('opponentHand').height);
-  cvs.get('letter').getContext("2d").clearRect(0,0,cvs.get('letter').width,cvs.get('letter').height);
+	cvs.get('letter').getContext("2d").clearRect(0,0,cvs.get('letter').width,cvs.get('letter').height);
 
 	battleBGM.currentTime = 0;
 	battleBGM.play();

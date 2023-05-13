@@ -49,15 +49,23 @@ class onloadSpriteAnime extends onloadSpriteImage{
   }
 
   calculateRepeatMag(speed){
-    this.repeatMag = Math.trunc((1 / STANDARD_INTERVAL)  * speed); //他に流用する場合、引数等での移動速度の調整が必要
+    this.repeatMag = Math.trunc(60  * speed / 1000); //他に流用する場合、引数等での移動速度の調整が必要
   }
 
-  //speed初期値は250ms秒で、1画像切り替わり
-  anime(speed = 250){
+  timerStart(){
+    this.stopFlag = false;
+  }
+
+  timerStop(){
+    this.stopFlag = true;
+  }
+
+  //speed初期値は500ms秒で、1画像切り替わり
+  anime(speed = 500){
     this.count = 0;
     this.calculateRepeatMag(speed);
     return new Promise(resolve => {
-      let spriteAnimeTimer = setInterval(() => {
+      let spriteAnimeRepeat = () => {
         this.ctx.clearRect(0,0,this.cvs.width,this.cvs.height);
         this.num = Math.trunc(this.count / this.repeatMag);
         this.render();
@@ -65,13 +73,13 @@ class onloadSpriteAnime extends onloadSpriteImage{
 
         if(this.count > this.totalNumber * this.repeatMag -1 && this.loopFlag === true){
           this.count = 0;
-          //stopFlagがオンになれば有無を言わさず終了したいが、、、、
-        } else if (this.count > this.totalNumber * this.repeatMag -1 || (this.loopFlag === true && winOrLoseFlag !== null)){/********時間がなくグローバル変数でストップ要改善!!!!!! */
-        // } else if (this.count > this.totalNumber * 10 -1 || (this.loopFlag === true && this.stopFlag === true)){/**ストップフラグを外部から書き換える方法分からず */
-          clearInterval(spriteAnimeTimer);
-          resolve();
+        } else if (this.count > this.totalNumber * this.repeatMag -1 ||
+          (this.loopFlag === true && this.stopFlag === true)){
+          return resolve();
         }
-      },STANDARD_INTERVAL);
+        requestAnimationFrame(spriteAnimeRepeat);
+      }
+      spriteAnimeRepeat();
     });
   }
 }
@@ -84,31 +92,34 @@ class onloadSpriteAnimeMove extends onloadSpriteAnime{
     super(imageSource,cvs,trimmingInfo,drawPosX,drawPosY,width,height,totalNumber,length);
     this.moveX = moveX;
     this.moveY = moveY;
+    this.initPosX = drawPosX;
   }
 
   anime(speed = 250){ //y軸移動は未実装
     this.count = 0;
     this.calculateRepeatMag(speed);
     this.moveCountX = 0;//他に流用する場合、移動速度の調整が必要
+    this.drawPosX = this.initPosX;
 
     return new Promise(resolve => {
-      let spriteAnimeMoveTimer = setInterval(() => {
+      let spriteAnimeMoveRepeat = () => {
         this.ctx.clearRect(140,0,this.cvs.width,this.cvs.height);
         this.num = Math.trunc(this.count / this.repeatMag);
         this.render();
         this.count ++;
         this.moveCountX ++;
-        this.drawPosX += 10; //他に流用する場合、移動速度の調整が必要
+        this.drawPosX += 5; //他に流用する場合、移動速度の調整が必要
 
         if(this.count > this.totalNumber * this.repeatMag - 1 ){
           this.count = 0;
         }
-        if(this.moveCountX * 10 > this.moveX){
+        if(this.moveCountX * 5 > this.moveX){
           this.ctx.clearRect(140,0,this.cvs.width,this.cvs.height);
-          clearInterval(spriteAnimeMoveTimer);
-          resolve();
+          return resolve();
         }
-      },STANDARD_INTERVAL);
+        requestAnimationFrame(spriteAnimeMoveRepeat);
+      };
+      spriteAnimeMoveRepeat();
     });
   }
 }
@@ -127,23 +138,27 @@ class countessVampire{
     this.screamSE = new Audio('./audio/SE/scream_01.mp3');
   }
 
+  idleStart(){
+    this.idle.timerStart();
+  }
+
+  idleStop(){
+    this.idle.timerStop();
+  }
+
   async renderIdle(){
-    await this.idle.onload();
     await this.idle.anime();
   }
 
   async renderAttack(){
-    //await this.attackEmote.onload();
-    //await this.attackEffect.onload();
-    await this.attackEmote.anime(100);
+    await this.attackEmote.anime(300);
     this.fbSE.play();
-    await this.attackEffect.anime(150);
+    await this.attackEffect.anime(600);
   }
 
   async renderDead(){
-    //await this.dead.onload();
     this.screamSE.play();
-    await this.dead.anime(150);
+    await this.dead.anime(400);
   }
 
 }
