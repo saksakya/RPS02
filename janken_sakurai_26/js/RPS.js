@@ -62,7 +62,6 @@ function renderOpponentHand(){
 * じゃんけんの合図を出力～結果表示まで
 *****************************************************************/
 async function RPSMain(cvs) {
-	let sleep = time => new Promise(resolve => setTimeout(resolve, time));
 
 	const RPSstart01 = new Audio('./audio/SE/RPSstart_01.wav');
 	const RPSstart02 = new Audio('./audio/SE/RPSstart_02.wav');
@@ -103,8 +102,8 @@ async function RPSMain(cvs) {
 	await renderElapsedTime(cvs);
 
 	while (drawFlag === true){
-		renderChar.player.draw();
-		renderChar.opponent.draw();
+		renderChar.player.renderDraw();
+		renderChar.opponent.renderDraw();
 		await sleep(2000);
 		RPSRand = Math.trunc(Math.random() * (RPS_START_RAND_RANGE.end - RPS_START_RAND_RANGE.start)) +  RPS_START_RAND_RANGE.start
 		await sleep(1000);
@@ -391,7 +390,6 @@ function opponentHandCalc(wodJudge,myHand){
 	async function resultOutput(cvs,result){
 	let drawText = null;
 	let ctx = cvs.getContext("2d");
-	let sleep = time => new Promise(resolve => setTimeout(resolve, time));
 
 	if(result == 'win'){
 		drawText = 'YOU WIN!'
@@ -434,8 +432,6 @@ async function resultAnimation(result){
 	if (result !== 'win'){
 		[i , j] =[j , i];
 	}
-
-	let sleep = time => new Promise(resolve => setTimeout(resolve, time));
 
 	await sleep(100);
 	await renderChar[i].renderAttack();

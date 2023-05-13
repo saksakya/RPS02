@@ -4,6 +4,12 @@
 
 'use strict';
 
+
+
+
+// 最大キャラ数
+const MAX_CHARACTER_NUMBER = 4;
+
 //CountessVampire
 const VAMPIRE_IMAGE_PATH = [
     "./img/character/Countess_Vampire/Idle.png",
@@ -92,7 +98,8 @@ const SAMURAI_IMAGE_PATH = [
   "./img/character/Samurai/Idle.png",
   "./img/character/Samurai/Attack_2.png",
   "./img/character/Samurai/Dead.png",
-  "./img/character/Samurai/Run.png"
+  "./img/character/Samurai/Run.png",
+  "./img/character/Samurai/Protection.png"
 ];
 
 const SAMURAI_IMAGE_POS_DEFAULT = [
@@ -134,12 +141,19 @@ const SAMURAI_IMAGE_POS_RUN = [
   ];
 
 
+  const SAMURAI_IMAGE_POS_PROTECTION = [
+    {startX:50,startY:55,width:60,height:80},
+    {startX:178,startY:55,width:60,height:80},
+  ];
+
+
 //Swordsman
 const SWORDSMAN_IMAGE_PATH = [
   "./img/character/Swordsman/Idle.png",
   "./img/character/Swordsman/Attack_1.png",
   "./img/character/Swordsman/Dead.png",
-  "./img/character/Swordsman/Pick_Up.png"
+  "./img/character/Swordsman/Pick_Up.png",
+  "./img/character/Swordsman/Enabling.png",
 ];
 
 const SWORDSMAN_IMAGE_POS_DEFAULT = [
@@ -277,6 +291,7 @@ class countessVampire{
     this.attackSE = new Audio('./audio/SE/fire-breath.wav');
     this.attackSE.volume = 0.5;
     this.screamSE = new Audio('./audio/SE/scream_01.mp3');
+    this.class = 'Ranged'
   }
 
   idleStart(){
@@ -302,8 +317,11 @@ class countessVampire{
     await this.attack();
   }
 
-  async draw(){
-    this.attackEffect.moveX = 120;
+  async renderDraw(){
+    let i ='player';
+    this.attackEffect.moveX = 320;
+    if(this === renderChar.player) i = 'opponent'
+    if(renderChar[i].class === 'Ranged') this.attackEffect.moveX = 115;
     await this.attack();
   }
 
@@ -328,6 +346,7 @@ class wondererMagician extends countessVampire{
     this.attackSE = new Audio('./audio/SE/lightning.wav');
     this.attackSE.volume = 0.5;
     this.screamSE = new Audio('./audio/SE/scream_03.mp3');
+    this.class = 'Ranged'
   }
 
   async renderDead(){
@@ -347,10 +366,11 @@ class samurai extends countessVampire{
     this.run = new onloadSpriteAnimeMove(SAMURAI_IMAGE_PATH[3],cvs,SAMURAI_IMAGE_POS_RUN,drawPosX,drawPosY,90,120,8,300,0,0);
     this.attackEmote = new onloadSpriteAnime(SAMURAI_IMAGE_PATH[1],cvs,SAMURAI_IMAGE_POS_ATTACK,drawPosX + 320,drawPosY - 50,140,160,5);
     this.dead = new onloadSpriteAnime(SAMURAI_IMAGE_PATH[2],cvs,SAMURAI_IMAGE_POS_DEAD,drawPosX,drawPosY,120,120,6);
+    this.protection = new onloadSpriteAnime(SAMURAI_IMAGE_PATH[4],cvs,SAMURAI_IMAGE_POS_PROTECTION,drawPosX,drawPosY,90,120,2);
     this.attackSE = new Audio('./audio/SE/sword-flash_01.mp3');
     this.attackSE.volume = 0.5;
     this.screamSE = new Audio('./audio/SE/scream_02.mp3');
-    this.initDrawPosX = drawPosX;
+    this.class = 'Melee'
   }
 
   async attack(){
@@ -360,15 +380,13 @@ class samurai extends countessVampire{
   }
 
   async renderAttack(){
-    this.run.moveX = 300;
-    this.attackEmote.drawPosX =  this.initDrawPosX + 320;
     await this.attack();
   }
 
-  async draw(){
-    this.run.moveX = 120;
-    this.attackEmote.drawPosX =  this.initDrawPosX + 140;
-    await this.attack();
+  async renderDraw(){
+    await sleep(1000);
+    this.attackSE.play();
+    await this.protection.anime(500);
   }
 
 
@@ -389,19 +407,47 @@ class swordsman extends samurai{
     this.run = new onloadSpriteAnimeMove(SWORDSMAN_IMAGE_PATH[3],cvs,SWORDSMAN_IMAGE_POS_RUN,drawPosX,drawPosY,90,120,8,300,0,0);
     this.attackEmote = new onloadSpriteAnime(SWORDSMAN_IMAGE_PATH[1],cvs,SWORDSMAN_IMAGE_POS_ATTACK,drawPosX + 360,drawPosY - 50,140,160,4);
     this.dead = new onloadSpriteAnime(SWORDSMAN_IMAGE_PATH[2],cvs,SWORDSMAN_IMAGE_POS_DEAD,drawPosX,drawPosY,120,120,4);
+    this.protection = new onloadSpriteAnime(SWORDSMAN_IMAGE_PATH[4],cvs,SWORDSMAN_IMAGE_POS_DEFAULT,drawPosX,drawPosY,90,120,5);
     this.attackSE = new Audio('./audio/SE/sword-flash_02.wav');
     this.attackSE.volume = 0.5;
     this.screamSE = new Audio('./audio/SE/scream_04.wav');
     this.screamSE.volume = 0.5;
+    this.class = 'Melee'
   }
 
 }
 
+
+
+///いい方法があれば教えてください。
+const PLAYER_CHARACTER_LIST =  [
+  new countessVampire(cvs.get('playerChar'),50,150),
+  new wondererMagician(cvs.get('playerChar'),50,150),
+  new samurai(cvs.get('playerChar'),50,150),
+  new swordsman(cvs.get('playerChar'),50,150),
+];
+
+const OPPONENT_CHARACTER_LIST =  [
+  new countessVampire(cvs.get('opponentChar'),50,150),
+  new wondererMagician(cvs.get('opponentChar'),50,150),
+  new samurai(cvs.get('opponentChar'),50,150),
+  new swordsman(cvs.get('opponentChar'),50,150),
+];
+
 // グローバルスコープでキャラの初期状態を宣言
 let renderChar = {}
-renderChar.player = new countessVampire(cvs.get('playerChar'),50,150);
-//renderChar.player = new swordsman(cvs.get('playerChar'),50,150);
-//renderChar.player = new wondererMagician(cvs.get('playerChar'),50,150);
-renderChar.opponent = new samurai(cvs.get('opponentChar'),50,150);
-//renderChar.opponent = new wondererMagician(cvs.get('opponentChar'),50,150);
-//renderChar.opponent = new countessVampire(cvs.get('opponentChar'),50,150);
+
+  //味方は選択できるようにする予定。
+  let randPChar = Math.trunc(Math.random() * MAX_CHARACTER_NUMBER);
+  renderChar.player = PLAYER_CHARACTER_LIST[randPChar];
+
+  // 敵キャラはランダム
+  let randOChar = Math.trunc(Math.random() * MAX_CHARACTER_NUMBER);
+
+  while (randOChar === randPChar)  {
+    randOChar = Math.trunc(Math.random() * MAX_CHARACTER_NUMBER);
+  }
+
+  renderChar.opponent = OPPONENT_CHARACTER_LIST[randOChar];
+
+
