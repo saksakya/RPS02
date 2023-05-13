@@ -1,0 +1,36 @@
+
+/* フォント定義 */
+@import url('https://fonts.googleapis.com/css?family=M+PLUS+1p');
+
+#canvas-wrap{
+    width: 600px;
+    height:400px;
+    max-width: 100%;
+    padding: 0;
+    box-sizing: content-box;
+    position:absolute;
+    top: 50%;
+    left: 50%;
+    translate: -50% -50%;
+}
+
+.canvas_warp:before{
+    content:"";
+    display: block;
+    padding-top: 50%;
+}
+.canvas{
+    position: absolute;
+    left:0;
+    top:0;
+    border: 0;
+    max-width:100%;
+    box-sizing: content-box;
+    padding: 0;
+    margin: 0;
+}
+
+.main{
+    height: 100vh;
+    position: relative;
+}
