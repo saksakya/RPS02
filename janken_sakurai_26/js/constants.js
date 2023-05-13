@@ -7,7 +7,7 @@
 // 勝ち負けの判定確率(デフォルト)
 const RPS_JUDGE_RANGE = {
   win:333,
-  draw:333,
+  draw:33333,
   lose:333,
 }
 RPS_JUDGE_RANGE.all = RPS_JUDGE_RANGE.win + RPS_JUDGE_RANGE.draw + RPS_JUDGE_RANGE.lose;
@@ -15,7 +15,7 @@ RPS_JUDGE_RANGE.all = RPS_JUDGE_RANGE.win + RPS_JUDGE_RANGE.draw + RPS_JUDGE_RAN
 //PONが出るまでの時間の乱数範囲(ミリ秒指定)
 const RPS_START_RAND_RANGE = {
   start:500,
-  end:5000
+  end:500
 }
 
 //PONが出てから負になるまでの時間(ミリ秒指定)
@@ -107,7 +107,6 @@ class onloadSpriteImage extends onloadImages{
     this.trimmingInfo = {};
     this.totalNumber = totalNumber;
     this.num = num;
-    this.onloadFlag = false;
 
     for(let i = 0; i < this.totalNumber; i ++)
       this.trimmingInfo[i] = {

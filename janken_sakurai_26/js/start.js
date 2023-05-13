@@ -27,6 +27,7 @@ async function startScreen (){
 	renderChar.player.renderIdle();
 	renderChar.opponent.renderIdle();
 
+
 	//スタート画面
 	ctx.get('letter').fillStyle = 'rgba(0, 0, 0, 0.4)';
 	ctx.get('letter').fillRect(0,0,cvs.get('letter').width,cvs.get('letter').height)

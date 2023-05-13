@@ -103,6 +103,9 @@ async function RPSMain(cvs) {
 	await renderElapsedTime(cvs);
 
 	while (drawFlag === true){
+		renderChar.player.draw();
+		renderChar.opponent.draw();
+		await sleep(2000);
 		RPSRand = Math.trunc(Math.random() * (RPS_START_RAND_RANGE.end - RPS_START_RAND_RANGE.start)) +  RPS_START_RAND_RANGE.start
 		await sleep(1000);
 		opponentHandResult = null;
