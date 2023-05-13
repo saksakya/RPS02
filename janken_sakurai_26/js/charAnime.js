@@ -38,43 +38,117 @@ const VAMPIRE_IMAGE_POS_SPA = [
   {startX:131,startY:18,width:30,height:15},
 ];
 
-// 下記関数は、クラスを配列でまとめれば、最適化可能。時間がなかったため妥協してコピー
-// キャラの増加をみこすのであれば、配列化しておくのが無難
 /****************************************************************
-* キャラクターを表示
+*  スプライト画像をアニメーションにするクラスの定義
 *****************************************************************/
-//classを定義
-async function renderChar(cvs,image,loopFlag = false){
-  let onloadRenderChar = new onloadSpriteAnime(image,cvs,VAMPIRE_IMAGE_POS_DEFAULT,50,150,90,120,5,loopFlag);
-  await onloadRenderChar.onload();
-  await onloadRenderChar.anime();
+class onloadSpriteAnime extends onloadSpriteImage{
+  constructor(imageSource,cvs,trimmingInfo,drawPosX = 0,drawPosY = 0,width,height,totalNumber = trimmingInfo.length,loopFlag = false){
+    super(imageSource,cvs,trimmingInfo,drawPosX,drawPosY,width,height,totalNumber,length);
+    this.loopFlag = loopFlag;
+    this.stopFlag = false;
+  }
+
+  calculateRepeatMag(speed){
+    this.repeatMag = Math.trunc((1 / STANDARD_INTERVAL)  * speed); //他に流用する場合、引数等での移動速度の調整が必要
+  }
+
+  //speed初期値は250ms秒で、1画像切り替わり
+  anime(speed = 250){
+    this.count = 0;
+    this.calculateRepeatMag(speed);
+    return new Promise(resolve => {
+      let spriteAnimeTimer = setInterval(() => {
+        this.ctx.clearRect(0,0,this.cvs.width,this.cvs.height);
+        this.num = Math.trunc(this.count / this.repeatMag);
+        this.render();
+        this.count ++;
+
+        if(this.count > this.totalNumber * this.repeatMag -1 && this.loopFlag === true){
+          this.count = 0;
+          //stopFlagがオンになれば有無を言わさず終了したいが、、、、
+        } else if (this.count > this.totalNumber * this.repeatMag -1 || (this.loopFlag === true && winOrLoseFlag !== null)){/********時間がなくグローバル変数でストップ要改善!!!!!! */
+        // } else if (this.count > this.totalNumber * 10 -1 || (this.loopFlag === true && this.stopFlag === true)){/**ストップフラグを外部から書き換える方法分からず */
+          clearInterval(spriteAnimeTimer);
+          resolve();
+        }
+      },STANDARD_INTERVAL);
+    });
+  }
 }
 
 /****************************************************************
-* 攻撃エモートを表示
+*  スプライト画像をアニメーションしながら動かすクラスの定義
 *****************************************************************/
-//classを定義
-async function renderAttackEmote(cvs,image,loopFlag = false){
-  let onloadRenderAttackEmotion = new onloadSpriteAnime(image,cvs,VAMPIRE_IMAGE_POS_DEFAULT,50,150,90,120,6,loopFlag);
-  await onloadRenderAttackEmotion.onload();
-  await onloadRenderAttackEmotion.anime(100);
+class onloadSpriteAnimeMove extends onloadSpriteAnime{
+  constructor(imageSource,cvs,trimmingInfo,drawPosX = 0,drawPosY = 0,width,height,totalNumber = trimmingInfo.length,moveX,moveY){
+    super(imageSource,cvs,trimmingInfo,drawPosX,drawPosY,width,height,totalNumber,length);
+    this.moveX = moveX;
+    this.moveY = moveY;
+  }
+
+  anime(speed = 250){ //y軸移動は未実装
+    this.count = 0;
+    this.calculateRepeatMag(speed);
+    this.moveCountX = 0;//他に流用する場合、移動速度の調整が必要
+
+    return new Promise(resolve => {
+      let spriteAnimeMoveTimer = setInterval(() => {
+        this.ctx.clearRect(140,0,this.cvs.width,this.cvs.height);
+        this.num = Math.trunc(this.count / this.repeatMag);
+        this.render();
+        this.count ++;
+        this.moveCountX ++;
+        this.drawPosX += 10; //他に流用する場合、移動速度の調整が必要
+
+        if(this.count > this.totalNumber * this.repeatMag - 1 ){
+          this.count = 0;
+        }
+        if(this.moveCountX * 10 > this.moveX){
+          this.ctx.clearRect(140,0,this.cvs.width,this.cvs.height);
+          clearInterval(spriteAnimeMoveTimer);
+          resolve();
+        }
+      },STANDARD_INTERVAL);
+    });
+  }
 }
 
 /****************************************************************
-* 消滅を表示
+*  CountessVampireのキャラ定義
 *****************************************************************/
-//classを定義
-async function renderLose(cvs,image,loopFlag = false){
-  let onloadRenderLose = new onloadSpriteAnime(image,cvs,VAMPIRE_IMAGE_POS_DEAD,50,150,90,120,6,loopFlag);
-  await onloadRenderLose.onload();
-  await onloadRenderLose.anime();
+class countessVampire{
+  constructor(cvs,drawPosX,drawPosY){
+    this.idle = new onloadSpriteAnime(VAMPIRE_IMAGE_PATH[0],cvs,VAMPIRE_IMAGE_POS_DEFAULT,drawPosX,drawPosY,90,120,5,true);
+    this.attackEmote = new onloadSpriteAnime(VAMPIRE_IMAGE_PATH[1],cvs,VAMPIRE_IMAGE_POS_DEFAULT,drawPosX,drawPosY,90,120,6);
+    this.attackEffect = new onloadSpriteAnimeMove(VAMPIRE_IMAGE_PATH[3],cvs,VAMPIRE_IMAGE_POS_SPA,drawPosX + 90,drawPosY + 24,50,15,3,320,0);
+    this.dead = new onloadSpriteAnime(VAMPIRE_IMAGE_PATH[2],cvs,VAMPIRE_IMAGE_POS_DEAD,drawPosX,drawPosY,90,120,8);
+    this.fbSE = new Audio('./audio/SE/fire-breath.wav');
+    this.fbSE.volume = 0.5;
+    this.screamSE = new Audio('./audio/SE/scream_01.mp3');
+  }
+
+  async renderIdle(){
+    await this.idle.onload();
+    await this.idle.anime();
+  }
+
+  async renderAttack(){
+    //await this.attackEmote.onload();
+    //await this.attackEffect.onload();
+    await this.attackEmote.anime(100);
+    this.fbSE.play();
+    await this.attackEffect.anime(150);
+  }
+
+  async renderDead(){
+    //await this.dead.onload();
+    this.screamSE.play();
+    await this.dead.anime(150);
+  }
+
 }
 
-/****************************************************************
-* 攻撃を表示
-*****************************************************************/
-async function renderAttackEffect(cvs,image){
-  let onloadAttackEffect = new onloadSpriteAnimeMove(image,cvs,VAMPIRE_IMAGE_POS_SPA,140,174,50,15,3,320,0);
-  await onloadAttackEffect.onload();
-  await onloadAttackEffect.anime();
-}
+// グローバルスコープでキャラの初期状態を宣言
+let renderChar = {}
+renderChar.player = new countessVampire(cvs.get('playerChar'),50,150);
+renderChar.opponent = new countessVampire(cvs.get('opponentChar'),50,150);

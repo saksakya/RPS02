@@ -5,7 +5,7 @@
 
 const battleBGM = new Audio('./audio/bgm/battle_01.mp3');
 battleBGM.loop = true;
-battleBGM.volume = 0.4;
+battleBGM.volume = 0.4 *  Master_BGM;
 
 /****************************************************************
 * じゃんけんボタン(自分の手の候補)を表示
@@ -17,7 +17,7 @@ async function renderRPSButton(cvs){
 	for(let i = 0; i < 3; i++){
 		onloadRPSButton.num = i;
 		onloadRPSButton.drawPosX = 100 + i * 150
-		onloadRPSButton.draw();
+		onloadRPSButton.render();
 	}
 }
 
@@ -33,7 +33,7 @@ function renderPlayerHand(i){
 
 	let onloadRPSButton = new onloadSpriteImage(RPS_IMAGE_PATH,cvs.get('opponentHand'),RPS_IMAGE_POS,40,30,100,100);
   onloadRPSButton.num = i;
-	onloadRPSButton.draw();
+	onloadRPSButton.render();
 }
 
 /****************************************************************
@@ -45,7 +45,7 @@ function renderOpponentHand(){
 
 	let opponentHandTimer = setInterval(() => {
 		onloadRPSButton.num = i;
-		onloadRPSButton.draw();
+		onloadRPSButton.render();
 
 		// 相手の手が決まったら中断(グローバル変数で判断)
 		if (opponentHandResult === i - 3 || winOrLoseFlag === 'timeout'){
@@ -215,14 +215,14 @@ function renderElapsedTime(cvs){
 	});
 	}
 
-	//桁数切り捨てで、下２桁まで算出
-	function mathTime(time){
+//桁数切り捨てで、下２桁まで算出
+function mathTime(time){
 	time = time / 10;
 	time = Math.trunc(time);
 	time = time / 100;
 	time = time.toFixed(2);
 	return time;
-	}
+}
 
 	/****************************************************************
 	* ボタンがクリックされたか確認。
@@ -416,33 +416,19 @@ function opponentHandCalc(wodJudge,myHand){
 * 勝敗のアニメーションを表示
 *****************************************************************/
 async function resultAnimation(result){
-	const fbSE = new Audio('./audio/SE/fire-breath.wav');
-	const screamSE = new Audio('./audio/SE/scream_01.mp3');
-	fbSE.volume = 0.5
-	screamSE.volume = 1
 
-	let displayCanvas = [
-		'playerChar',
-		'opponentChar',
-	];
-	let reverseFlag = [false,true];
-	let i = 0, j = 1;
+	let i = 'player', j = 'opponent';
 
 	if (result !== 'win'){
-		i = 1;
-		j = 0;
+		[i , j] =[j , i];
 	}
 
 	let sleep = time => new Promise(resolve => setTimeout(resolve, time));
 
 	await sleep(100);
-	await renderAttackEmote(cvs.get(displayCanvas[i]),VAMPIRE_IMAGE_PATH[1],false);
-	fbSE.play();
-	await renderAttackEffect(cvs.get(displayCanvas[i]),VAMPIRE_IMAGE_PATH[3],false);
-	screamSE.play();
-	await renderLose(cvs.get(displayCanvas[j]),VAMPIRE_IMAGE_PATH[2],false);
+	await renderChar[i].renderAttack();
+	await renderChar[j].renderDead();
   await wolSE();
-
 }
 
 function eraseRPSButton(){
@@ -484,15 +470,14 @@ function initVariables(){
 	cvs.get('opponentHand').getContext("2d").clearRect(0,0,cvs.get('opponentHand').width,cvs.get('opponentHand').height);
   cvs.get('letter').getContext("2d").clearRect(0,0,cvs.get('letter').width,cvs.get('letter').height);
 
-  battleBGM.currentTime = 0;
-	battleBGM.volume = 0.2;
-	battleBGM.loop = true;
-  battleBGM.play();
+	battleBGM.currentTime = 0;
+	battleBGM.play();
   // じゃんけんボタン表示
 	renderRPSButton(cvs.get('button'));
   // 背景再描画
   renderBackground(cvs.get('background'));
   // キャラ再描画
-	renderChar(cvs.get('playerChar'),VAMPIRE_IMAGE_PATH[0],true);
-	renderChar(cvs.get('opponentChar'),VAMPIRE_IMAGE_PATH[0],true);
+
+	renderChar.player.renderIdle();
+	renderChar.opponent.renderIdle();
 }

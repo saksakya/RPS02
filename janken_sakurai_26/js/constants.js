@@ -21,6 +21,10 @@ const RPS_START_RAND_RANGE = {
 //PONが出てから負になるまでの時間(ミリ秒指定)
 const RPS_LOSE_TIME = 5000;
 
+//MasterBGM
+const Master_BGM = 0.5;
+
+
 // 描写間隔(1000/62.5fps = 16)
 const STANDARD_INTERVAL = 16;
 
@@ -116,92 +120,17 @@ class onloadSpriteImage extends onloadImages{
   // 読み込み判定を非同期で一度確認
   onload() {
     return new Promise(resolve => {
-      this.image.onload =() =>{
+      this.image.onload = () =>{
           resolve();
       }
     });
   }
   // 実際に読み込み
-  draw(){
+  render(){
     this.ctx.drawImage(this.image,this.trimmingInfo[this.num].x,this.trimmingInfo[this.num].y,
         this.trimmingInfo[this.num].w,this.trimmingInfo[this.num].h,this.drawPosX,this.drawPosY,this.width,this.height);
   }
 
-}
-
-/****************************************************************
-*  スプライト画像をアニメーションにするクラスの定義
-*****************************************************************/
-class onloadSpriteAnime extends onloadSpriteImage{
-  constructor(imageSource,cvs,trimmingInfo,drawPosX = 0,drawPosY = 0,width,height,totalNumber = trimmingInfo.length,loopFlag = false){
-    super(imageSource,cvs,trimmingInfo,drawPosX,drawPosY,width,height,totalNumber,length);
-    this.loopFlag = loopFlag;
-    this.stopFlag = false;
-  }
-
-  calculateRepeatMag(speed){
-    this.repeatMag = Math.trunc((1 / STANDARD_INTERVAL)  * speed); //他に流用する場合、引数等での移動速度の調整が必要
-  }
-
-  //speed初期値は250ms秒で、1画像切り替わり
-  anime(speed = 250){
-    this.count = 0;
-    this.calculateRepeatMag(speed);
-    return new Promise(resolve => {
-      let spriteAnimeTimer = setInterval(() => {
-        this.ctx.clearRect(0,0,this.cvs.width,this.cvs.height);
-        this.num = Math.trunc(this.count / this.repeatMag);
-        this.draw();
-        this.count ++;
-
-        if(this.count > this.totalNumber * this.repeatMag -1 && this.loopFlag === true){
-          this.count = 0;
-          //stopFlagがオンになれば有無を言わさず終了したいが、、、、
-        } else if (this.count > this.totalNumber * this.repeatMag -1 || (this.loopFlag === true && winOrLoseFlag !== null)){/********時間がなくグローバル変数でストップ要改善!!!!!! */
-        // } else if (this.count > this.totalNumber * 10 -1 || (this.loopFlag === true && this.stopFlag === true)){/**ストップフラグを外部から書き換える方法分からず */
-          clearInterval(spriteAnimeTimer);
-          resolve();
-        }
-      },STANDARD_INTERVAL);
-    });
-  }
-}
-
-/****************************************************************
-*  スプライト画像をアニメーションしながら動かすクラスの定義
-*****************************************************************/
-class onloadSpriteAnimeMove extends onloadSpriteAnime{
-  constructor(imageSource,cvs,trimmingInfo,drawPosX = 0,drawPosY = 0,width,height,totalNumber = trimmingInfo.length,moveX,moveY){
-    super(imageSource,cvs,trimmingInfo,drawPosX,drawPosY,width,height,totalNumber,length);
-    this.moveX = moveX;
-    this.moveY = moveY;
-  }
-
-  anime(speed = 250){ //y軸移動は未実装
-    this.count = 0;
-    this.calculateRepeatMag(speed);
-    this.moveCountX = 0;//他に流用する場合、移動速度の調整が必要
-
-    return new Promise(resolve => {
-      let spriteAnimeMoveTimer = setInterval(() => {
-        this.ctx.clearRect(140,0,this.cvs.width,this.cvs.height);
-        this.num = Math.trunc(this.count / this.repeatMag);
-        this.draw();
-        this.count ++;
-        this.moveCountX ++;
-        this.drawPosX += 10; //他に流用する場合、移動速度の調整が必要
-
-        if(this.count > this.totalNumber * this.repeatMag - 1 ){
-          this.count = 0;
-        }
-        if(this.moveCountX * 10 > this.moveX){
-          this.ctx.clearRect(140,0,this.cvs.width,this.cvs.height);
-          clearInterval(spriteAnimeMoveTimer);
-          resolve();
-        }
-      },STANDARD_INTERVAL);
-    });
-  }
 }
 
 /****************************************************************

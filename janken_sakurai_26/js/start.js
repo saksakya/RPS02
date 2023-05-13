@@ -6,8 +6,7 @@
 
 const bgm = new Audio('./audio/bgm/opening.mp3');
 bgm.loop = true;
-bgm.volume = 0.2;
-bgm.muted = true; //最初はミュートにしないと再生できない。
+bgm.volume = 0.2 * Master_BGM;
 
 /****************************************************************
 *  背景画像をランダム読み込み
@@ -25,8 +24,8 @@ async function startScreen (){
 	// 背景画像をランダム読み込み
 	renderBackground(cvs.get('background'));
 	// 立ち絵を表示(プレイヤー・敵)
-	renderChar(cvs.get('playerChar'),VAMPIRE_IMAGE_PATH[0],true);
-	renderChar(cvs.get('opponentChar'),VAMPIRE_IMAGE_PATH[0],true);
+	renderChar.player.renderIdle();
+	renderChar.opponent.renderIdle();
 
 	//スタート画面
 	ctx.get('letter').fillStyle = 'rgba(0, 0, 0, 0.4)';
@@ -39,7 +38,6 @@ async function startScreen (){
 	ctx.get('letter').font = '30px "M PLUS 10p", sans-serif';
 	ctx.get('letter').fillText('Click to Play',300,250)
 	if(bgm.paused) bgm.play();
-	bgm.muted = false; //ミュート即解除
 }
 
 /****************************************************************
