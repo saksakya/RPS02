@@ -13,8 +13,8 @@ bgm.volume = 0.2 * Master_BGM;
 *****************************************************************/
 function renderBackground(cvs){
 	let rand = Math.trunc(Math.random() * MAX_STAGE_COUNT)
-	let onloadBackground = new onloadImages(BG_IMAGE_PATH[rand],cvs)
-	onloadBackground.draw();
+	let onloadBackground = new renderImage({imageSource:BG_IMAGE_PATH[rand],cvs:cvs})
+	onloadBackground.render();
 }
 
 /****************************************************************

@@ -7,7 +7,7 @@
 // 勝ち負けの判定確率(デフォルト)
 const RPS_JUDGE_RANGE = {
   win:333,
-  draw:33333,
+  draw:333,
   lose:333,
 }
 RPS_JUDGE_RANGE.all = RPS_JUDGE_RANGE.win + RPS_JUDGE_RANGE.draw + RPS_JUDGE_RANGE.lose;
@@ -15,7 +15,7 @@ RPS_JUDGE_RANGE.all = RPS_JUDGE_RANGE.win + RPS_JUDGE_RANGE.draw + RPS_JUDGE_RAN
 //PONが出るまでの時間の乱数範囲(ミリ秒指定)
 const RPS_START_RAND_RANGE = {
   start:500,
-  end:500
+  end:5000
 }
 
 //PONが出てから負になるまでの時間(ミリ秒指定)
@@ -79,20 +79,23 @@ ctx.get('opponentChar').save();
 /****************************************************************
 *  画像読み込み用クラスの定義(1画像)
 *****************************************************************/
-class onloadImages{
-  constructor(imageSource,cvs,drawPosX = 0,drawPosY = 0,width = cvs.width,height = cvs.height){
+class renderImage{
+  constructor({
+    imageSource,
+    cvs,
+    renderPos = { x : 0, y : 0},
+    size = { width : cvs.width, height : cvs.height}
+  }){
     this.image = new Image();
     this.image.src = imageSource;
     this.cvs = cvs;
     this.ctx = this.cvs.getContext("2d");
-    this.drawPosX = drawPosX;
-    this.drawPosY = drawPosY;
-    this.width = width;
-    this.height = height;
+    this.renderPos = renderPos;
+    this.size = size;
   }
-  draw() {
+  render() {
     this.image.onload = () => {
-      this.ctx.drawImage(this.image,this.drawPosX,this.drawPosY,this.width,this.height);
+      this.ctx.drawImage(this.image,this.renderPos.x,this.renderPos.y,this.size.width,this.size.height);
     }
 
   }
@@ -101,21 +104,23 @@ class onloadImages{
 /****************************************************************
 *  スプライト画像読み込み用クラスの定義(1画像)
 *****************************************************************/
-class onloadSpriteImage extends onloadImages{
-  constructor(imageSource,cvs,trimmingInfo,drawPosX = 0,drawPosY = 0,width,height,totalNumber = trimmingInfo.length,num = 0){
-    super(imageSource,cvs,drawPosX,drawPosY,width,height);
-    this.trimmingInfo = {};
+class renderSpriteImage extends renderImage{
+  constructor({
+    imageSource,
+    cvs,
+    renderPos,
+    size,
+    trimmingInfo,
+    trimmingNum = 0,
+    totalNumber = trimmingInfo.length,
+  }){
+    super({imageSource,cvs,renderPos,size});
+    //this.trimmingInfo = {};
+    this.trimmingInfo = trimmingInfo;
     this.totalNumber = totalNumber;
-    this.num = num;
+    this.num = trimmingNum;
+  }
 
-    for(let i = 0; i < this.totalNumber; i ++)
-      this.trimmingInfo[i] = {
-        x:trimmingInfo[i].startX,
-        y:trimmingInfo[i].startY,
-        w:trimmingInfo[i].width,
-        h:trimmingInfo[i].height
-      }
-    }
   // 読み込み判定を非同期で一度確認
   onload() {
     return new Promise(resolve => {
@@ -124,10 +129,11 @@ class onloadSpriteImage extends onloadImages{
       }
     });
   }
+
   // 実際に読み込み
   render(){
-    this.ctx.drawImage(this.image,this.trimmingInfo[this.num].x,this.trimmingInfo[this.num].y,
-        this.trimmingInfo[this.num].w,this.trimmingInfo[this.num].h,this.drawPosX,this.drawPosY,this.width,this.height);
+    this.ctx.drawImage(this.image,this.trimmingInfo[this.num].startX,this.trimmingInfo[this.num].startY,
+        this.trimmingInfo[this.num].width,this.trimmingInfo[this.num].height,this.renderPos.x,this.renderPos.y,this.size.width,this.size.height);
   }
 
 }

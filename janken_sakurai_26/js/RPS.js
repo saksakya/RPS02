@@ -11,12 +11,19 @@ battleBGM.volume = 0.4 *  Master_BGM;
 * じゃんけんボタン(自分の手の候補)を表示
 *****************************************************************/
 async function renderRPSButton(cvs){
-	let onloadRPSButton = new onloadSpriteImage(RPS_IMAGE_PATH,cvs,RPS_IMAGE_POS,100,280,100,100);
+  let onloadRPSButton = new renderSpriteImage({
+    imageSource : RPS_IMAGE_PATH,
+    cvs : cvs,
+    renderPos : { x : 100, y : 280},
+    size : { width : 100, height : 100},
+    trimmingInfo : RPS_IMAGE_POS,
+  });
+
 	await onloadRPSButton.onload();
 
 	for(let i = 0; i < 3; i++){
 		onloadRPSButton.num = i;
-		onloadRPSButton.drawPosX = 100 + i * 150
+		onloadRPSButton.renderPos.x = 100 + i * 150;
 		onloadRPSButton.render();
 	}
 }
@@ -31,7 +38,13 @@ function renderPlayerHand(i){
     return;
 	}
 
-	let onloadRPSButton = new onloadSpriteImage(RPS_IMAGE_PATH,cvs.get('opponentHand'),RPS_IMAGE_POS,40,30,100,100);
+  let onloadRPSButton = new renderSpriteImage({
+    imageSource : RPS_IMAGE_PATH,
+    cvs : cvs.get('opponentHand'),
+    renderPos : { x : 40 , y: 30},
+    size : { width : 100, height : 100},
+    trimmingInfo : RPS_IMAGE_POS,
+  });
   onloadRPSButton.num = i;
 	onloadRPSButton.render();
 }
@@ -40,7 +53,14 @@ function renderPlayerHand(i){
 * 相手の手を表示(xミリ秒ごとに切り替え)
 *****************************************************************/
 function renderOpponentHand(){
-	let onloadRPSButton = new onloadSpriteImage(RPS_IMAGE_PATH,cvs.get('opponentHand'),RPS_IMAGE_POS,465,30,100,100,6,3);
+	let onloadRPSButton = new renderSpriteImage({
+    imageSource : RPS_IMAGE_PATH,
+    cvs : cvs.get('opponentHand'),
+    renderPos : { x : 465, y : 30},
+    size : { width : 100, height : 100},
+    trimmingInfo : RPS_IMAGE_POS,
+  });
+
 	let i = 3;
 
 	let opponentHandTimer = setInterval(() => {
@@ -475,7 +495,7 @@ function initVariables(){
 	opponentHandResult = null;
 	winOrLoseFlag = null;
 	drawFlag = null;
-  //randomDecideOpponent();
+  randomDecideOpponent();
 	renderChar.player.idleStart();
 	renderChar.opponent.idleStart();
 	cvs.get('opponentHand').getContext("2d").clearRect(0,0,cvs.get('opponentHand').width,cvs.get('opponentHand').height);

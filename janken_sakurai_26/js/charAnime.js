@@ -195,9 +195,17 @@ const SWORDSMAN_IMAGE_POS_RUN = [
 /****************************************************************
 *  スプライト画像をアニメーションにするクラスの定義(引数を配列に置き換えたいが、、全てに影響するため時間的に断念)
 *****************************************************************/
-class onloadSpriteAnime extends onloadSpriteImage{
-  constructor(imageSource,cvs,trimmingInfo,drawPosX = 0,drawPosY = 0,width,height,totalNumber = trimmingInfo.length,loopFlag = false){
-    super(imageSource,cvs,trimmingInfo,drawPosX,drawPosY,width,height,totalNumber,length);
+class renderSpriteAnime extends renderSpriteImage{
+  constructor({
+    imageSource,
+    cvs,
+    renderPos,
+    size,
+    trimmingInfo,
+    totalNumber = trimmingInfo.length,
+    loopFlag = false
+  }){
+    super({imageSource,cvs,renderPos,size,trimmingInfo,totalNumber});
     this.loopFlag = loopFlag;
     this.stopFlag = false;
   }
@@ -222,6 +230,7 @@ class onloadSpriteAnime extends onloadSpriteImage{
       let spriteAnimeRepeat = () => {
         this.ctx.clearRect(0,0,this.cvs.width,this.cvs.height);
         this.num = Math.trunc(this.count / this.repeatMag);
+
         this.render();
         this.count ++;
 
@@ -241,20 +250,28 @@ class onloadSpriteAnime extends onloadSpriteImage{
 /****************************************************************
 *  スプライト画像をアニメーションしながら動かすクラスの定義(引数を配列に置き換えたいが、、全てに影響するため時間的に断念)
 *****************************************************************/
-class onloadSpriteAnimeMove extends onloadSpriteAnime{
-  constructor(imageSource,cvs,trimmingInfo,drawPosX = 0,drawPosY = 0,width,height,totalNumber = trimmingInfo.length,moveX,moveY,clearRange = 140){
-    super(imageSource,cvs,trimmingInfo,drawPosX,drawPosY,width,height,totalNumber,length);
-    this.moveX = moveX;
-    this.moveY = moveY;
-    this.initPosX = drawPosX;
+class renderSpriteAnimeMove extends renderSpriteAnime{
+  constructor({
+    imageSource,
+    cvs,
+    renderPos,
+    size,
+    trimmingInfo,
+    totalNumber = trimmingInfo.length,
+    move,
+    clearRange = 140
+    }){
+    super({imageSource,cvs,renderPos,size,trimmingInfo,totalNumber});
+    this.move = move;
+    this.initPosX = renderPos.x;
     this.clearRange = clearRange;
   }
 
   anime(speed = 500){ //y軸移動は未実装
     this.count = 0;
     this.calculateRepeatMag(speed);
-    this.moveCountX = 0;//他に流用する場合、移動速度の調整が必要
-    this.drawPosX = this.initPosX;
+    this.moveCount = 0;//他に流用する場合、移動速度の調整が必要
+    this.renderPos.x = this.initPosX;
 
     return new Promise(resolve => {
       let spriteAnimeMoveRepeat = () => {
@@ -262,13 +279,13 @@ class onloadSpriteAnimeMove extends onloadSpriteAnime{
         this.num = Math.trunc(this.count / this.repeatMag);
         this.render();
         this.count ++;
-        this.moveCountX ++;
-        this.drawPosX += 5; //他に流用する場合、移動速度の調整が必要
+        this.moveCount ++;
+        this.renderPos.x += 5; //他に流用する場合、移動速度の調整が必要
 
         if(this.count > this.totalNumber * this.repeatMag - 1 ){
           this.count = 0;
         }
-        if(this.moveCountX * 5 > this.moveX){
+        if(this.moveCount * 5 > this.move.x){
           this.ctx.clearRect(this.clearRange,0,this.cvs.width,this.cvs.height);
           return resolve();
         }
@@ -283,11 +300,42 @@ class onloadSpriteAnimeMove extends onloadSpriteAnime{
 *  CountessVampireのキャラ定義
 *****************************************************************/
 class countessVampire{
-  constructor({cvs,drawPos}){
-    this.idle = new onloadSpriteAnime(VAMPIRE_IMAGE_PATH[0],cvs,VAMPIRE_IMAGE_POS_DEFAULT,drawPos.x,drawPos.y,90,120,5,true);
-    this.attackEmote = new onloadSpriteAnime(VAMPIRE_IMAGE_PATH[1],cvs,VAMPIRE_IMAGE_POS_DEFAULT,drawPos.x,drawPos.y,90,120,6);
-    this.attackEffect = new onloadSpriteAnimeMove(VAMPIRE_IMAGE_PATH[3],cvs,VAMPIRE_IMAGE_POS_SPA,drawPos.x + 90,drawPos.y  + 24,50,15,3,320,0);
-    this.dead = new onloadSpriteAnime(VAMPIRE_IMAGE_PATH[2],cvs,VAMPIRE_IMAGE_POS_DEAD,drawPos.x,drawPos.y,90,120,8);
+  constructor({cvs,renderPos}){
+    this.idle = new renderSpriteAnime({
+      imageSource : VAMPIRE_IMAGE_PATH[0],
+      cvs : cvs,
+      renderPos : renderPos,
+      size : { width : 90 , height : 120},
+      trimmingInfo : VAMPIRE_IMAGE_POS_DEFAULT,
+      totalNumber : 5,
+      loopFlag : true
+    });
+    this.attackEmote = new renderSpriteAnime({
+      imageSource : VAMPIRE_IMAGE_PATH[1],
+      cvs : cvs,
+      renderPos : renderPos,
+      size : { width : 90 , height : 120},
+      trimmingInfo : VAMPIRE_IMAGE_POS_DEFAULT,
+      totalNumber : 6
+    });
+    this.attackEffect = new renderSpriteAnimeMove({
+      imageSource : VAMPIRE_IMAGE_PATH[3],
+      cvs : cvs,
+      renderPos :  {x : renderPos.x + 90 , y : renderPos.y + 24},
+      size : { width : 50 , height : 15},
+      trimmingInfo : VAMPIRE_IMAGE_POS_SPA,
+      totalNumber : 3,
+      move : { x: 320, y : 0}
+    });
+    this.dead = new renderSpriteAnime({
+      imageSource : VAMPIRE_IMAGE_PATH[2],
+      cvs : cvs,
+      renderPos : renderPos,
+      size : { width : 90 , height : 120},
+      trimmingInfo : VAMPIRE_IMAGE_POS_DEAD,
+      totalNumber : 8
+    });
+
     this.attackSE = new Audio('./audio/SE/fire-breath.wav');
     this.attackSE.volume = 0.5;
     this.screamSE = new Audio('./audio/SE/scream_01.mp3');
@@ -313,18 +361,17 @@ class countessVampire{
   }
 
   async renderAttack(){
-    this.attackEffect.moveX = 320;
+    this.attackEffect.move.x = 320;
     await this.attack();
   }
 
   async renderDraw(){
     let i ='player';
-    this.attackEffect.moveX = 320;
+    this.attackEffect.move.x = 320;
     if(this === renderChar.player) i = 'opponent'
-    if(renderChar[i].class === 'Ranged') this.attackEffect.moveX = 120;
+    if(renderChar[i].class === 'Ranged') this.attackEffect.move.x = 120;
     await this.attack();
   }
-
 
   async renderDead(){
     this.screamSE.play();
@@ -337,12 +384,42 @@ class countessVampire{
 *  wondererMagicianのキャラ定義
 *****************************************************************/
 class wondererMagician extends countessVampire{
-  constructor({cvs,drawPos}){
-    super({cvs,drawPos});
-    this.idle = new onloadSpriteAnime(MAGICIAN_IMAGE_PATH[0],cvs,MAGICIAN_IMAGE_POS_DEFAULT,drawPos.x,drawPos.y,120,120,8,true);
-    this.attackEmote = new onloadSpriteAnime(MAGICIAN_IMAGE_PATH[1],cvs,MAGICIAN_IMAGE_POS_ATTACK,drawPos.x,drawPos.y,120,120,7);
-    this.attackEffect = new onloadSpriteAnimeMove(MAGICIAN_IMAGE_PATH[3],cvs,MAGICIAN_IMAGE_POS_SPA,drawPos.x + 125,drawPos.y + 10,50,40,9,320,0,175);
-    this.dead = new onloadSpriteAnime(MAGICIAN_IMAGE_PATH[2],cvs,MAGICIAN_IMAGE_POS_DEAD,drawPos.x,drawPos.y,120,120,4);
+  constructor({cvs,renderPos}){
+    super({cvs,renderPos});
+    this.idle = new renderSpriteAnime({
+      imageSource : MAGICIAN_IMAGE_PATH[0],
+      cvs : cvs,
+      renderPos : renderPos,
+      size : { width : 120 , height : 120},
+      trimmingInfo : MAGICIAN_IMAGE_POS_DEFAULT,
+      totalNumber : 8,
+      loopFlag : true
+    });
+    this.attackEmote = new renderSpriteAnime({
+      imageSource :MAGICIAN_IMAGE_PATH[1],
+      cvs : cvs,
+      renderPos : renderPos,
+      size : { width : 120 , height : 120},
+      trimmingInfo : MAGICIAN_IMAGE_POS_ATTACK,
+      totalNumber : 7
+    });
+    this.attackEffect = new renderSpriteAnimeMove({
+      imageSource : MAGICIAN_IMAGE_PATH[3],
+      cvs : cvs,
+      renderPos :  {x : renderPos.x + 125 , y : renderPos.y + 10},
+      size : { width : 50 , height : 40},
+      trimmingInfo : MAGICIAN_IMAGE_POS_SPA,
+      totalNumber : 9,
+      move : { x: 175, y : 0}
+    });
+    this.dead = new renderSpriteAnime({
+      imageSource : MAGICIAN_IMAGE_PATH[2],
+      cvs : cvs,
+      renderPos : renderPos,
+      size : { width : 120 , height : 120},
+      trimmingInfo : MAGICIAN_IMAGE_POS_DEAD,
+      totalNumber : 4
+    });
     this.attackSE = new Audio('./audio/SE/lightning.wav');
     this.attackSE.volume = 0.5;
     this.screamSE = new Audio('./audio/SE/scream_03.mp3');
@@ -360,13 +437,51 @@ class wondererMagician extends countessVampire{
 *  samuraiのキャラ定義
 *****************************************************************/
 class samurai extends countessVampire{
-  constructor({cvs,drawPos}){
-    super({cvs,drawPos});
-    this.idle = new onloadSpriteAnime(SAMURAI_IMAGE_PATH[0],cvs,SAMURAI_IMAGE_POS_DEFAULT,drawPos.x,drawPos.y,90,120,6,true);
-    this.run = new onloadSpriteAnimeMove(SAMURAI_IMAGE_PATH[3],cvs,SAMURAI_IMAGE_POS_RUN,drawPos.x,drawPos.y,90,120,8,300,0,0);
-    this.attackEmote = new onloadSpriteAnime(SAMURAI_IMAGE_PATH[1],cvs,SAMURAI_IMAGE_POS_ATTACK,drawPos.x + 320,drawPos.y - 50,140,160,5);
-    this.dead = new onloadSpriteAnime(SAMURAI_IMAGE_PATH[2],cvs,SAMURAI_IMAGE_POS_DEAD,drawPos.x,drawPos.y,120,120,6);
-    this.protection = new onloadSpriteAnime(SAMURAI_IMAGE_PATH[4],cvs,SAMURAI_IMAGE_POS_PROTECTION,drawPos.x,drawPos.y,90,120,2);
+  constructor({cvs,renderPos}){
+    super({cvs,renderPos});
+    this.idle = new renderSpriteAnime({
+      imageSource : SAMURAI_IMAGE_PATH[0],
+      cvs : cvs,
+      renderPos : renderPos,
+      size : { width : 90 , height : 120},
+      trimmingInfo : SAMURAI_IMAGE_POS_DEFAULT,
+      totalNumber : 6,
+      loopFlag : true
+    });
+    this.run = new renderSpriteAnimeMove({
+      imageSource :SAMURAI_IMAGE_PATH[3],
+      cvs : cvs,
+      renderPos : {x : renderPos.x , y : renderPos.y},//参照渡しにすると値が初期化されない
+      size : { width : 90 , height : 120},
+      trimmingInfo : SAMURAI_IMAGE_POS_RUN,
+      totalNumber : 8,
+      move : { x: 300, y : 0},
+      clearRange : 0
+    });
+    this.attackEmote = new renderSpriteAnime({
+      imageSource : SAMURAI_IMAGE_PATH[1],
+      cvs : cvs,
+      renderPos :  {x : renderPos.x + 320 , y : renderPos.y - 50},
+      size : { width : 140 , height : 160},
+      trimmingInfo : SAMURAI_IMAGE_POS_ATTACK,
+      totalNumber : 5
+    });
+    this.dead = new renderSpriteAnime({
+      imageSource : SAMURAI_IMAGE_PATH[2],
+      cvs : cvs,
+      renderPos : renderPos,
+      size : { width : 120 , height : 120},
+      trimmingInfo : SAMURAI_IMAGE_POS_DEAD,
+      totalNumber : 6
+    });
+    this.protection = new renderSpriteAnime({
+      imageSource : SAMURAI_IMAGE_PATH[4],
+      cvs : cvs,
+      renderPos : renderPos,
+      size : { width : 90 , height : 120},
+      trimmingInfo : SAMURAI_IMAGE_POS_PROTECTION,
+      totalNumber : 2
+    });
     this.attackSE = new Audio('./audio/SE/sword-flash_01.mp3');
     this.attackSE.volume = 0.5;
     this.screamSE = new Audio('./audio/SE/scream_02.mp3');
@@ -400,13 +515,51 @@ class samurai extends countessVampire{
 *  swordsmanのキャラ定義
 *****************************************************************/
 class swordsman extends samurai{
-  constructor({cvs,drawPos}){
-    super({cvs,drawPos});
-    this.idle = new onloadSpriteAnime(SWORDSMAN_IMAGE_PATH[0],cvs,SWORDSMAN_IMAGE_POS_DEFAULT,drawPos.x,drawPos.y,90,120,5,true);
-    this.run = new onloadSpriteAnimeMove(SWORDSMAN_IMAGE_PATH[3],cvs,SWORDSMAN_IMAGE_POS_RUN,drawPos.x,drawPos.y,90,120,8,300,0,0);
-    this.attackEmote = new onloadSpriteAnime(SWORDSMAN_IMAGE_PATH[1],cvs,SWORDSMAN_IMAGE_POS_ATTACK,drawPos.x + 360,drawPos.y - 50,140,160,4);
-    this.dead = new onloadSpriteAnime(SWORDSMAN_IMAGE_PATH[2],cvs,SWORDSMAN_IMAGE_POS_DEAD,drawPos.x,drawPos.y,120,120,4);
-    this.protection = new onloadSpriteAnime(SWORDSMAN_IMAGE_PATH[4],cvs,SWORDSMAN_IMAGE_POS_DEFAULT,drawPos.x,drawPos.y,90,120,5);
+  constructor({cvs,renderPos}){
+    super({cvs,renderPos});
+    this.idle = new renderSpriteAnime({
+      imageSource : SWORDSMAN_IMAGE_PATH[0],
+      cvs : cvs,
+      renderPos : renderPos,
+      size : { width : 90 , height : 120},
+      trimmingInfo : SWORDSMAN_IMAGE_POS_DEFAULT,
+      totalNumber : 5,
+      loopFlag : true
+    });
+    this.run = new renderSpriteAnimeMove({
+      imageSource :SWORDSMAN_IMAGE_PATH[3],
+      cvs : cvs,
+      renderPos : {x : renderPos.x , y : renderPos.y},//参照渡しにすると値が初期化されない
+      size : { width : 90 , height : 120},
+      trimmingInfo : SWORDSMAN_IMAGE_POS_RUN,
+      totalNumber : 8,
+      move : { x: 300, y : 0},
+      clearRange : 0
+    });
+    this.attackEmote = new renderSpriteAnime({
+      imageSource : SWORDSMAN_IMAGE_PATH[1],
+      cvs : cvs,
+      renderPos :  {x : renderPos.x + 360 , y : renderPos.y - 50},
+      size : { width : 140 , height : 160},
+      trimmingInfo : SWORDSMAN_IMAGE_POS_ATTACK,
+      totalNumber : 4
+    });
+    this.dead = new renderSpriteAnime({
+      imageSource : SWORDSMAN_IMAGE_PATH[2],
+      cvs : cvs,
+      renderPos : renderPos,
+      size : { width : 120 , height : 120},
+      trimmingInfo : SWORDSMAN_IMAGE_POS_DEAD,
+      totalNumber : 4
+    });
+    this.protection = new renderSpriteAnime({
+      imageSource : SWORDSMAN_IMAGE_PATH[4],
+      cvs : cvs,
+      renderPos : renderPos,
+      size : { width : 90 , height : 120},
+      trimmingInfo : SWORDSMAN_IMAGE_POS_DEFAULT,
+      totalNumber : 5
+    });
     this.attackSE = new Audio('./audio/SE/sword-flash_02.wav');
     this.attackSE.volume = 0.5;
     this.screamSE = new Audio('./audio/SE/scream_04.wav');
@@ -416,20 +569,19 @@ class swordsman extends samurai{
 
 }
 
-
 ///いい方法があれば教えてください。
 const PLAYER_CHARACTER_LIST =  [
-  new countessVampire({cvs:cvs.get('playerChar'), drawPos:{x : 50, y : 150}}),
-  new wondererMagician({cvs:cvs.get('playerChar'), drawPos:{x : 50, y : 150}}),
-  new samurai({cvs:cvs.get('playerChar'), drawPos:{x : 50, y : 150}}),
-  new swordsman({cvs:cvs.get('playerChar'), drawPos:{x : 50, y : 150}}),
+  new countessVampire({cvs:cvs.get('playerChar'), renderPos:{x : 50, y : 150}}),
+  new wondererMagician({cvs:cvs.get('playerChar'), renderPos:{x : 50, y : 150}}),
+  new samurai({cvs:cvs.get('playerChar'), renderPos:{x : 50, y : 150}}),
+  new swordsman({cvs:cvs.get('playerChar'), renderPos:{x : 50, y : 150}}),
 ];
 
 const OPPONENT_CHARACTER_LIST =  [
-  new countessVampire({cvs:cvs.get('opponentChar'), drawPos:{x : 50, y : 150}}),
-  new wondererMagician({cvs:cvs.get('opponentChar'), drawPos:{x : 50, y : 150}}),
-  new samurai({cvs:cvs.get('opponentChar'), drawPos:{x : 50, y : 150}}),
-  new swordsman({cvs:cvs.get('opponentChar'), drawPos:{x : 50, y : 150}}),
+  new countessVampire({cvs:cvs.get('opponentChar'), renderPos:{x : 50, y : 150}}),
+  new wondererMagician({cvs:cvs.get('opponentChar'), renderPos:{x : 50, y : 150}}),
+  new samurai({cvs:cvs.get('opponentChar'), renderPos:{x : 50, y : 150}}),
+  new swordsman({cvs:cvs.get('opponentChar'), renderPos:{x : 50, y : 150}}),
 ];
 
 // グローバルスコープでキャラの初期状態を宣言
@@ -437,7 +589,7 @@ let renderChar = {}
 
   //味方は選択できるようにする予定。
   let randPChar = Math.trunc(Math.random() * MAX_CHARACTER_NUMBER);
-  renderChar.player = PLAYER_CHARACTER_LIST[randPChar];;
+  renderChar.player = PLAYER_CHARACTER_LIST[randPChar];
 
   //敵キャラはランダム
 function randomDecideOpponent(){
