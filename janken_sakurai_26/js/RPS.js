@@ -475,6 +475,7 @@ function initVariables(){
 	opponentHandResult = null;
 	winOrLoseFlag = null;
 	drawFlag = null;
+  //randomDecideOpponent();
 	renderChar.player.idleStart();
 	renderChar.opponent.idleStart();
 	cvs.get('opponentHand').getContext("2d").clearRect(0,0,cvs.get('opponentHand').width,cvs.get('opponentHand').height);
