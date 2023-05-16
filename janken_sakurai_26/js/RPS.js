@@ -11,13 +11,13 @@ battleBGM.volume = 0.4 *  Master_BGM;
 * じゃんけんボタン(自分の手の候補)を表示
 *****************************************************************/
 async function renderRPSButton(cvs){
-  let onloadRPSButton = new renderSpriteImage({
-    imageSource : RPS_IMAGE_PATH,
-    cvs : cvs,
-    renderPos : { x : 100, y : 280},
-    size : { width : 100, height : 100},
-    trimmingInfo : RPS_IMAGE_POS,
-  });
+	let onloadRPSButton = new renderSpriteImage({
+		imageSource : RPS_IMAGE_PATH,
+		cvs : cvs,
+		renderPos : { x : 100, y : 280},
+		size : { width : 100, height : 100},
+		trimmingInfo : RPS_IMAGE_POS,
+	});
 
 	await onloadRPSButton.onload();
 
@@ -38,14 +38,14 @@ function renderPlayerHand(i){
     return;
 	}
 
-  let onloadRPSButton = new renderSpriteImage({
-    imageSource : RPS_IMAGE_PATH,
-    cvs : cvs.get('opponentHand'),
-    renderPos : { x : 40 , y: 30},
-    size : { width : 100, height : 100},
-    trimmingInfo : RPS_IMAGE_POS,
-  });
-  onloadRPSButton.num = i;
+	let onloadRPSButton = new renderSpriteImage({
+		imageSource : RPS_IMAGE_PATH,
+		cvs : cvs.get('opponentHand'),
+		renderPos : { x : 40 , y: 30},
+		size : { width : 100, height : 100},
+		trimmingInfo : RPS_IMAGE_POS,
+	});
+	onloadRPSButton.num = i;
 	onloadRPSButton.render();
 }
 
@@ -59,7 +59,7 @@ function renderOpponentHand(){
     renderPos : { x : 465, y : 30},
     size : { width : 100, height : 100},
     trimmingInfo : RPS_IMAGE_POS,
-  });
+});
 
 	let i = 3;
 
@@ -122,8 +122,7 @@ async function RPSMain(cvs) {
 	await renderElapsedTime(cvs);
 
 	while (drawFlag === true){
-		renderChar.player.renderDraw();
-		renderChar.opponent.renderDraw();
+		resultDraw();
 		await sleep(2000);
 		RPSRand = Math.trunc(Math.random() * (RPS_START_RAND_RANGE.end - RPS_START_RAND_RANGE.start)) +  RPS_START_RAND_RANGE.start
 		await sleep(1000);
@@ -232,8 +231,6 @@ function renderElapsedTime(cvs){
 		if (count >= countMax || opponentHandResult !== null){
 			if(count >= countMax) {
 				winOrLoseFlag = 'timeout';
-				renderChar.player.idleStop();
-				renderChar.opponent.idleStop();
 			}
 			clearInterval(elapsedTimer);
 			resolve();
@@ -308,8 +305,6 @@ canvas[CANVAS_NUM].addEventListener("click", e => {
 		}else{
 			if((countTimerStart === null || drawFlag === true) && buttonFlag !== null){
 				winOrLoseFlag = 'falseStart';
-				renderChar.player.idleStop();
-				renderChar.opponent.idleStop();
 			}else if(buttonFlag !== null){
 				RPSJudge(buttonFlag);
 			}
@@ -370,13 +365,11 @@ function RPSJudge(myHand){
 	opponentHandResult = opponentHandCalc(wodJudge,myHand); //グローバル変数に相手の手を格納
   renderPlayerHand(myHand); //自分の手を描画
 
-  if(wodJudge === 'draw'){
+if(wodJudge === 'draw'){
     drawFlag = true; //グローバル変数にドローフラグを設定
-  } else  {
+} else  {
     winOrLoseFlag = wodJudge; //グローバル変数に勝敗を格納
-		renderChar.player.idleStop();
-		renderChar.opponent.idleStop();
-  }
+}
 
 }
 
@@ -422,7 +415,7 @@ function opponentHandCalc(wodJudge,myHand){
 	}
 
 	ctx.clearRect(0,100,cvs.width,200);
-  eraseRPSButton();
+	eraseRPSButton();
 
 	// 勝利したときのアニメーションを表示
 	await sleep(200);
@@ -445,7 +438,7 @@ function opponentHandCalc(wodJudge,myHand){
 /****************************************************************
 * 勝敗のアニメーションを表示
 *****************************************************************/
-async function resultAnimation(result){
+async function resultAnimation(result,voicelessFlag = false){
 
 	let i = 'player', j = 'opponent';
 
@@ -453,37 +446,44 @@ async function resultAnimation(result){
 		[i , j] =[j , i];
 	}
 
+	renderChar.player.idleStop();
+	renderChar.opponent.idleStop();
 	await sleep(100);
 	await renderChar[i].renderAttack();
 	await renderChar[j].renderDead();
-  await wolSE();
+	if(voicelessFlag === false) await wolSE();
+}
+
+function resultDraw(){
+	renderChar.player.renderDraw();
+	renderChar.opponent.renderDraw();
 }
 
 function eraseRPSButton(){
-  ctx.get('button').clearRect(0,0,cvs.get('button').width,cvs.get('button').height);
+	ctx.get('button').clearRect(0,0,cvs.get('button').width,cvs.get('button').height);
 }
 
 /****************************************************************
 * 勝敗のSEを流す
 *****************************************************************/
 async function wolSE(){
-  let wolSE1 = new Audio;
-  let wolSE2 = new Audio;
+let wolSE1 = new Audio;
+let wolSE2 = new Audio;
 
-  return new Promise(resolve => {
+	return new Promise(resolve => {
     if(winOrLoseFlag === 'win'){
-      wolSE1.src = './audio/SE/win_01.mp3';
-      wolSE2.src = './audio/SE/win_02.mp3';
+		wolSE1.src = './audio/SE/win_01.mp3';
+		wolSE2.src = './audio/SE/win_02.mp3';
     } else {
-      wolSE1.src = "./audio/SE/lose_01.mp3";
-      wolSE2.src = "./audio/SE/lose_02.mp3";
+		wolSE1.src = "./audio/SE/lose_01.mp3";
+		wolSE2.src = "./audio/SE/lose_02.mp3";
     }
 
     battleBGM.pause();
     wolSE1.play();
     // wolSE1.onended = () => wolSE2.play();
     resolve();
-  });
+	});
 }
 
 
@@ -491,24 +491,32 @@ async function wolSE(){
 * 乱数描画等の初期化
 *****************************************************************/
 function initVariables(){
+	//変数初期化
 	countTimerStart = null;
 	opponentHandResult = null;
 	winOrLoseFlag = null;
 	drawFlag = null;
-  randomDecideOpponent();
-	renderChar.player.idleStart();
-	renderChar.opponent.idleStart();
-	cvs.get('opponentHand').getContext("2d").clearRect(0,0,cvs.get('opponentHand').width,cvs.get('opponentHand').height);
-	cvs.get('letter').getContext("2d").clearRect(0,0,cvs.get('letter').width,cvs.get('letter').height);
+
+	//canvas描画リセット
+	for(let value of cvs.values()){
+		value.getContext("2d").clearRect(0,0,value.width,value.height);
+	}
+
+	randomDecideCharacter();
 
 	battleBGM.currentTime = 0;
 	battleBGM.play();
   // じゃんけんボタン表示
 	renderRPSButton(cvs.get('button'));
   // 背景再描画
-  renderBackground(cvs.get('background'));
+	renderBackground(cvs.get('background'));
   // キャラ再描画
+	idleRestart();
+}
 
+function idleRestart(){
+	renderChar.player.idleStart();
+	renderChar.opponent.idleStart();
 	renderChar.player.renderIdle();
 	renderChar.opponent.renderIdle();
 }

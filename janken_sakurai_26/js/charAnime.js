@@ -4,9 +4,6 @@
 
 'use strict';
 
-
-
-
 // 最大キャラ数
 const MAX_CHARACTER_NUMBER = 4;
 
@@ -193,7 +190,7 @@ const SWORDSMAN_IMAGE_POS_RUN = [
 
 
 /****************************************************************
-*  スプライト画像をアニメーションにするクラスの定義(引数を配列に置き換えたいが、、全てに影響するため時間的に断念)
+*  スプライト画像をアニメーションにするクラスの定義
 *****************************************************************/
 class renderSpriteAnime extends renderSpriteImage{
   constructor({
@@ -206,6 +203,7 @@ class renderSpriteAnime extends renderSpriteImage{
     loopFlag = false
   }){
     super({imageSource,cvs,renderPos,size,trimmingInfo,totalNumber});
+    this.voicelessFlag = false;
     this.loopFlag = loopFlag;
     this.stopFlag = false;
   }
@@ -248,7 +246,7 @@ class renderSpriteAnime extends renderSpriteImage{
 }
 
 /****************************************************************
-*  スプライト画像をアニメーションしながら動かすクラスの定義(引数を配列に置き換えたいが、、全てに影響するため時間的に断念)
+*  スプライト画像をアニメーションしながら動かすクラスの定義
 *****************************************************************/
 class renderSpriteAnimeMove extends renderSpriteAnime{
   constructor({
@@ -356,7 +354,7 @@ class countessVampire{
 
   async attack(){
     await this.attackEmote.anime(200);
-    this.attackSE.play();
+    if(this.voicelessFlag === false) this.attackSE.play();
     await this.attackEffect.anime(100);
   }
 
@@ -374,7 +372,7 @@ class countessVampire{
   }
 
   async renderDead(){
-    this.screamSE.play();
+    if(this.oicelessFlag === false) this.screamSE.play();
     await this.dead.anime(400);
   }
 
@@ -410,7 +408,8 @@ class wondererMagician extends countessVampire{
       size : { width : 50 , height : 40},
       trimmingInfo : MAGICIAN_IMAGE_POS_SPA,
       totalNumber : 9,
-      move : { x: 175, y : 0}
+      move : { x: 175, y : 0},
+      clearRange : 170
     });
     this.dead = new renderSpriteAnime({
       imageSource : MAGICIAN_IMAGE_PATH[2],
@@ -427,7 +426,7 @@ class wondererMagician extends countessVampire{
   }
 
   async renderDead(){
-    this.screamSE.play();
+    if(this.voicelessFlag === false) this.screamSE.play();
     await this.dead.anime(800);
   }
 
@@ -490,7 +489,7 @@ class samurai extends countessVampire{
 
   async attack(){
     await this.run.anime(100);
-    this.attackSE.play();
+    if(this.voicelessFlag === false) this.attackSE.play();
     await this.attackEmote.anime(300);
   }
 
@@ -500,12 +499,12 @@ class samurai extends countessVampire{
 
   async renderDraw(){
     await sleep(1000);
-    this.attackSE.play();
+    if(this.voicelessFlag === false) this.attackSE.play();
     await this.protection.anime(500);
   }
 
   async renderDead(){
-    this.screamSE.play();
+    if(this.voicelessFlag === false) this.screamSE.play();
     await this.dead.anime(400);
   }
 
@@ -539,7 +538,7 @@ class swordsman extends samurai{
     this.attackEmote = new renderSpriteAnime({
       imageSource : SWORDSMAN_IMAGE_PATH[1],
       cvs : cvs,
-      renderPos :  {x : renderPos.x + 360 , y : renderPos.y - 50},
+      renderPos :  {x : renderPos.x + 350 , y : renderPos.y - 50},
       size : { width : 140 , height : 160},
       trimmingInfo : SWORDSMAN_IMAGE_POS_ATTACK,
       totalNumber : 4
@@ -569,38 +568,48 @@ class swordsman extends samurai{
 
 }
 
+const initPos = {
+  x:50,
+  y:150
+}
+
 ///いい方法があれば教えてください。
 const PLAYER_CHARACTER_LIST =  [
-  new countessVampire({cvs:cvs.get('playerChar'), renderPos:{x : 50, y : 150}}),
-  new wondererMagician({cvs:cvs.get('playerChar'), renderPos:{x : 50, y : 150}}),
-  new samurai({cvs:cvs.get('playerChar'), renderPos:{x : 50, y : 150}}),
-  new swordsman({cvs:cvs.get('playerChar'), renderPos:{x : 50, y : 150}}),
+  new countessVampire({cvs:cvs.get('playerChar'), renderPos : initPos}),
+  new wondererMagician({cvs:cvs.get('playerChar'), renderPos : initPos}),
+  new samurai({cvs:cvs.get('playerChar'), renderPos : initPos}),
+  new swordsman({cvs:cvs.get('playerChar'), renderPos : initPos}),
 ];
 
 const OPPONENT_CHARACTER_LIST =  [
-  new countessVampire({cvs:cvs.get('opponentChar'), renderPos:{x : 50, y : 150}}),
-  new wondererMagician({cvs:cvs.get('opponentChar'), renderPos:{x : 50, y : 150}}),
-  new samurai({cvs:cvs.get('opponentChar'), renderPos:{x : 50, y : 150}}),
-  new swordsman({cvs:cvs.get('opponentChar'), renderPos:{x : 50, y : 150}}),
+  new countessVampire({cvs:cvs.get('opponentChar'), renderPos : initPos}),
+  new wondererMagician({cvs:cvs.get('opponentChar'), renderPos : initPos}),
+  new samurai({cvs:cvs.get('opponentChar'), renderPos : initPos}),
+  new swordsman({cvs:cvs.get('opponentChar'), renderPos : initPos}),
 ];
 
 // グローバルスコープでキャラの初期状態を宣言
 let renderChar = {}
 
-  //味方は選択できるようにする予定。
+//味方は選択できるようにできず
+function randomDecideCharacter(){
   let randPChar = Math.trunc(Math.random() * MAX_CHARACTER_NUMBER);
-  renderChar.player = PLAYER_CHARACTER_LIST[randPChar];
-
-  //敵キャラはランダム
-function randomDecideOpponent(){
   let randOChar = Math.trunc(Math.random() * MAX_CHARACTER_NUMBER);
 
   while (randOChar === randPChar)  {
     randOChar = Math.trunc(Math.random() * MAX_CHARACTER_NUMBER);
   }
-
+  renderChar.player = PLAYER_CHARACTER_LIST[randPChar];
   renderChar.opponent = OPPONENT_CHARACTER_LIST[randOChar];
+
+  if(screenFlag === 'title') {
+    renderChar.player.voicelessFlag = true;
+    renderChar.opponent.voicelessFlag = true;
+  }else{
+    renderChar.player.voicelessFlag = false;
+    renderChar.opponent.voicelessFlag = false;
+  }
+
 }
 
-  randomDecideOpponent();
 

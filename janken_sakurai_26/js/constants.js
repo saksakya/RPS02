@@ -7,7 +7,7 @@
 // 勝ち負けの判定確率(デフォルト)
 const RPS_JUDGE_RANGE = {
   win:333,
-  draw:333,
+  draw:33333,
   lose:333,
 }
 RPS_JUDGE_RANGE.all = RPS_JUDGE_RANGE.win + RPS_JUDGE_RANGE.draw + RPS_JUDGE_RANGE.lose;
@@ -37,6 +37,13 @@ for (let i = 0; i < MAX_STAGE_COUNT; i++){
 
 // じゃんけんの手画像のパス
 const RPS_IMAGE_PATH = './img/sprit_RPS.png';
+
+const ICON_PATH = [
+  './img/rock.png',
+  './img/paper.png',
+  './img/scissors.png'
+]
+
 
 // じゃんけんの手(スプライト画像)の切り抜き範囲を定義
 const RPS_IMAGE_POS = [
@@ -93,11 +100,23 @@ class renderImage{
     this.renderPos = renderPos;
     this.size = size;
   }
-  render() {
-    this.image.onload = () => {
-      this.ctx.drawImage(this.image,this.renderPos.x,this.renderPos.y,this.size.width,this.size.height);
-    }
 
+  // 読み込み判定を非同期で一度確認
+  onload() {
+    return new Promise(resolve => {
+      this.image.onload = () =>{
+          resolve();
+      }
+    });
+  }
+
+  render() {
+    return new Promise(resolve => {
+      this.image.onload = () => {
+        this.ctx.drawImage(this.image,this.renderPos.x,this.renderPos.y,this.size.width,this.size.height);
+        resolve();
+      }
+    });
   }
 }
 
@@ -119,15 +138,6 @@ class renderSpriteImage extends renderImage{
     this.trimmingInfo = trimmingInfo;
     this.totalNumber = totalNumber;
     this.num = trimmingNum;
-  }
-
-  // 読み込み判定を非同期で一度確認
-  onload() {
-    return new Promise(resolve => {
-      this.image.onload = () =>{
-          resolve();
-      }
-    });
   }
 
   // 実際に読み込み
