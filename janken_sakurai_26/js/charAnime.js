@@ -372,7 +372,7 @@ class countessVampire{
   }
 
   async renderDead(){
-    if(this.oicelessFlag === false) this.screamSE.play();
+    if(this.voicelessFlag === false) this.screamSE.play();
     await this.dead.anime(400);
   }
 

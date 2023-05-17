@@ -8,6 +8,77 @@ battleBGM.loop = true;
 battleBGM.volume = 0.4 *  Master_BGM;
 
 /****************************************************************
+*  文字スクロール専用のクラス
+*****************************************************************/
+class scrollText extends textAnimation{
+	constructor ({cvs}) {
+    super({cvs})
+  }
+
+  renderTextAnimation({initElement,finalElement,str}){
+    return new Promise(resolve => {
+      this.str = str;
+      this.timeLine.to(initElement,{
+        x:finalElement.x,
+        y:finalElement.y,
+        opacity : finalElement.opacity,
+        duration : finalElement.duration,
+        ease : "power4.inout",
+        //yoyo: true,
+        //repeat: 1,
+        //repeatDelay:2,
+        onUpdate: () => {
+          this.reRenderText(initElement,true);
+        },
+        onComplete: () => {
+          resolve();
+        }
+      });
+    });
+  }
+
+  //以下2つのメソッドは実装できず
+  renderTextRotation({initElement,finalElement,str}){
+    return new Promise(resolve => {
+      this.str = str;
+      this.timeLine.to(initElement,{
+        x:finalElement.x,
+        y:finalElement.y,
+        opacity : finalElement.opacity,
+        rotate : finalElement.rotate,
+        duration : 1,
+        ease : "power4.inout",
+        //yoyo: true,
+        //repeat: 1,
+        //repeatDelay:2,
+        onUpdate: () => {
+          this.renderRotation(initElement,false);
+        },
+        onComplete: () => {
+          resolve();
+        }
+      });
+    });
+  }
+
+
+  renderRotation(textElement,addStrokeText = false){
+    this.ctx.clearRect(0,0,this.cvs.width,this.cvs.height);
+    this.ctx.globalAlpha = textElement.opacity;
+    this.ctx.beginPath();
+    this.ctx.translate(300,400);
+    this.ctx.rotate((-45 * Math.PI) / 180);
+
+    if (addStrokeText===true) {
+      this.ctx.lineWidth = 1;
+      this.ctx.strokeStyle = '#000000'
+      this.ctx.strokeText(this.str,textElement.x,textElement.y);
+    }
+  }
+
+}
+
+/****************************************************************
 * じゃんけんボタン(自分の手の候補)を表示
 *****************************************************************/
 async function renderRPSButton(cvs){
@@ -81,16 +152,20 @@ function renderOpponentHand(){
 /****************************************************************
 * じゃんけんの合図を出力～結果表示まで
 *****************************************************************/
-async function RPSMain(cvs) {
+async function RPSMain(cvs){
+  //音声データ配列化
+  let rpsSE= new Array(2);
+  for(let i = 0; i < 2; i++) {
+    rpsSE[i] = new Array(2).fill(0);
+  }
 
-	const RPSstart01 = new Audio('./audio/SE/RPSstart_01.wav');
-	const RPSstart02 = new Audio('./audio/SE/RPSstart_02.wav');
-	const RPSstart03 = new Audio('./audio/SE/RPSstart_03.wav');
-	const RPSdraw01 = new Audio('./audio/SE/RPSdraw_01.wav');
-	const RPSdraw02 = new Audio('./audio/SE/RPSdraw_02.wav');
-	const RPSdraw03 = new Audio('./audio/SE/RPSdraw_03.wav');
+  for(let i = 0; i <3; i++){
+    rpsSE[0][i] = new Audio(`./audio/SE/RPSstart_0${i + 1}.wav`);
+    rpsSE[1][i] = new Audio(`	./audio/SE/RPSdraw_0${i + 1}.wav`);
+  }
 
-	let falseStartDetect = () => {
+  //フライング検出用
+  let falseStartDetect = () => {
 		if(winOrLoseFlag === 'falseStart'){
     renderPlayerHand(null);
 		resultOutput(cvs,winOrLoseFlag);
@@ -99,153 +174,101 @@ async function RPSMain(cvs) {
 		return false;
 	}
 
+  let initElement = [];
+  let finalElement = [];
+  //始点と終点等定義
+  initElement[0] = new element({x:150,y:50,opacity:0});
+  initElement[1] = new element({x:450,y:350,opacity:0});
+  initElement[2] = new element({x:300,y:200,opacity:0});
+  finalElement[0] = new element({x:250,y:200,opacity:1,duration:0.7});
+  finalElement[1] = new element({x:330,y:200,opacity:1,duration:0.7});
+  finalElement[2] = new element({x:300,y:200,opacity:1,duration:0});
+
+  let RPSRand = () => Math.trunc(Math.random() * (RPS_START_RAND_RANGE.end - RPS_START_RAND_RANGE.start))
+  +  RPS_START_RAND_RANGE.start;
+
   //初期化
 	renderChar.player.idleStop();
 	renderChar.opponent.idleStop();
 	await sleep(100);
 	initVariables();
 
-	let RPSRand = Math.trunc(Math.random() * (RPS_START_RAND_RANGE.end - RPS_START_RAND_RANGE.start)) +  RPS_START_RAND_RANGE.start
-	await sleep(1500);
-	RPSstart01.play();
-	await charScroll("じゃん",cvs,40,200,200,0,300);
-	await sleep(500);
-	RPSstart02.play();
-	await charScroll("けん",cvs,560,200,-200,0,300);
-	await sleep(RPSRand); //PON!が表示される時間は、ランダムで決定される。
-	cvs.getContext("2d").clearRect(0,0,cvs.width,cvs.height);
-	if (falseStartDetect() == true) return;
-	await charScroll("PON!",cvs,300,200,0,0,0);
-	RPSstart03.play();
-	renderOpponentHand();
-	countTimerStart = performance.now();
-	await renderElapsedTime(cvs);
+  let signNumber = 0;
+  let renderScrollText = new scrollText({cvs : cvs});
+  renderScrollText.renderFontChange({fontSize : 40});
 
-	while (drawFlag === true){
-		resultDraw();
-		await sleep(2000);
-		RPSRand = Math.trunc(Math.random() * (RPS_START_RAND_RANGE.end - RPS_START_RAND_RANGE.start)) +  RPS_START_RAND_RANGE.start
-		await sleep(1000);
-		opponentHandResult = null;
-		RPSdraw01.play();
-		await charScroll("あい",cvs,40,200,200,0,300);
-		await sleep(500);
-		RPSdraw02.play();
-		await charScroll("こで",cvs,560,200,-200,0,300);
-		await sleep(RPSRand); //PON!が表示される時間は、ランダムで決定される。
-		cvs.getContext("2d").clearRect(0,0,cvs.width,cvs.height);
-		if (falseStartDetect() == true) return;
-		await charScroll("SYO!",cvs,300,200,0,0,0);
-		RPSdraw03.play();
+  await sleep(1000);
+
+  do{
+    if(drawFlag === true){
+      await resultDraw();
+      opponentHandResult = null;
+      signNumber = 1;
+      await sleep(500);
+    }
+
+    for(let i = 0; i < 3; i++){
+      if (falseStartDetect() == true) return;
+      rpsSE[signNumber][i].play();
+      renderScrollText.renderFontChange({fontSize : 40});
+      await renderScrollText.renderTextAnimation({
+        initElement:initElement[i],
+        finalElement:finalElement[i],
+        str:RPS_SIGN[signNumber][i]
+      });
+      if(i === 1){
+        await sleep(RPSRand());
+      }else{
+        await sleep(100);
+      }
+      if (falseStartDetect() == true) return;
+    }
+    drawFlag = null;
     renderPlayerHand(null);
-		drawFlag = null;
-		renderOpponentHand();
-		countTimerStart = performance.now();
-		await renderElapsedTime(cvs);
-	}
+    renderOpponentHand();
+    countTimerStart = performance.now();
+    await renderElapsedTime(cvs);
+  } while(drawFlag === true)
 
 	resultOutput(cvs,winOrLoseFlag);
 
 }
 
 /****************************************************************
-* 所定の位置から所定の位置まで文字をスクロールする(表示文字列,キャンバス要素,初期位置x,y,移動距離x,y,秒数)
-*****************************************************************/
-function charScroll(outputChar,cvs,initPosX,initPosY,moveX,moveY,animationDuration){
-	return new Promise(resolve => {
-		let ctx = cvs.getContext("2d");
-		ctx.font =   '40px "M PLUS 10p", sans-serif';
-		ctx.fillStyle = 'white';
-		ctx.textBaseline = 'middle';
-		ctx.textAlign = 'center';
-
-		let count = 0;
-		let countMax = animationDuration * 1/ STANDARD_INTERVAL;
-		// console.log(countMax);
-		let movePerCountX = moveX / countMax;
-		let movePerCountY = moveY / countMax;
-
-		if (animationDuration === 0){
-		renderCharBackground(cvs,0,cvs.height * 3/8,cvs.width,cvs.height / 4);
-		ctx.fillStyle = 'white';
-		ctx.fillText(outputChar,initPosX,initPosY)
-		return resolve();
-		}
-
-
-		let charScrollTimer = setInterval(() => {
-
-		ctx.clearRect(0,0,cvs.width,cvs.height);
-		// clearCanvas(cvs,range)
-		renderCharBackground(cvs,0,cvs.height * 3/8,cvs.width,cvs.height / 4);
-		ctx.fillStyle = 'white';
-		ctx.fillText(outputChar,initPosX + count * movePerCountX,initPosY + count * movePerCountY)
-		count ++;
-		if (count >= countMax){
-			clearInterval(charScrollTimer);
-			resolve();
-		}
-		},STANDARD_INTERVAL);
-	});
-}
-
-
-/****************************************************************
-* 文字を見やすくするために、文字のバックグラウンドを黒透過で表示
-*****************************************************************/
-function renderCharBackground(cvs,startX,startY,width,height){
-	let ctx =  cvs.getContext("2d");
-	ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
-	ctx.fillRect(startX,startY,width,height)
-}
-
-/****************************************************************
-* 経過時間を表示
+* 経過時間を計算して表示
 *****************************************************************/
 function renderElapsedTime(cvs){
-	return new Promise(resolve => {
-		let ctx =  cvs.getContext("2d");
-		let count = 0;
-		let elapsedTime = 0;
-		let clearFlag = 0;
-		let countMax = RPS_LOSE_TIME * 1/ STANDARD_INTERVAL;
-		ctx.font =   '30px "M PLUS 10p", sans-serif';
-		ctx.fillStyle = 'white';
-		ctx.textBaseline = 'top';
-		ctx.textAlign = 'right';
 
-		// console.log(countMax);
-		let elapsedTimer = setInterval(() => {
-		ctx.clearRect(200,0,300,150);
-		// renderCharBackground(cvs,25,40,105,50);
-		renderCharBackground(cvs,245,20,105,50);
-		ctx.fillStyle = 'white';
-		elapsedTime = mathTime(performance.now() - countTimerStart);
-		// ctx.fillText(elapsedTime,120,50)
-		if (elapsedTime > 1 && clearFlag === 0){
-			ctx.clearRect(0,0,cvs.width,cvs.height);
-			clearFlag = 1;
-		}
-		ctx.fillText(elapsedTime,340,30)
-		count ++;
-		if (count >= countMax || opponentHandResult !== null){
-			if(count >= countMax) {
-				winOrLoseFlag = 'timeout';
-			}
-			clearInterval(elapsedTimer);
-			resolve();
-		}
-		},STANDARD_INTERVAL);
+  let ctx =  cvs.getContext("2d");
+
+  ctx.font = ctx.font.replace(match, 34);
+  ctx.fillStyle = 'white';
+  ctx.textBaseline = 'top';
+  ctx.textAlign = 'right';
+
+  return new Promise(resolve => {
+    let elapsedTimer = () =>{
+      ctx.clearRect(200,0,300,150);
+      calculateTime();
+      ctx.fillText(elapsedTime,340,30)
+      ctx.strokeText(elapsedTime,340,30)
+      if(performance.now() - countTimerStart >  RPS_LOSE_TIME || opponentHandResult !== null){
+        if(performance.now() - countTimerStart > RPS_LOSE_TIME) winOrLoseFlag = 'timeout';
+
+        return resolve();
+      }
+      requestAnimationFrame(elapsedTimer);
+    }
+    elapsedTimer();
 	});
-	}
+}
 
-//桁数切り捨てで、下２桁まで算出
-function mathTime(time){
-	time = time / 10;
-	time = Math.trunc(time);
-	time = time / 100;
-	time = time.toFixed(2);
-	return time;
+function calculateTime(){
+  elapsedTime = performance.now() - countTimerStart;
+  elapsedTime = elapsedTime / 10;
+  elapsedTime = Math.trunc(elapsedTime);
+  elapsedTime = elapsedTime / 100;
+  elapsedTime = elapsedTime.toFixed(2);
 }
 
 	/****************************************************************
@@ -349,10 +372,6 @@ function RPSJudge(myHand){
 		wod.win = Math.trunc(wod.win * 0.1);
 	}
 
-	// console.log(elapsedTime);
-	// console.log(wod);
-	// console.log(wodRand);
-
 	if(wodRand < wod.win){
 		wodJudge = 'win';
 	}else if(wodRand < wod.win + wod.lose){
@@ -401,19 +420,17 @@ function opponentHandCalc(wodJudge,myHand){
 	* 結果を処理する関数
 	*****************************************************************/
 	async function resultOutput(cvs,result){
-	let drawText = null;
+	let textContent  = null;
 	let ctx = cvs.getContext("2d");
+  let renderText = new scrollText({cvs : cvs});
+  let cvsFill = new cvsFillRect({cvs : canvas[4]});
+  let initElement = new element({x:300,y:150,opacity:0});
+  let finalElement = new element({x:300,y:150,opacity:1});
+  let resultSubtext = RESULT_SUBTEXT[result];
 
-	if(result == 'win'){
-		drawText = 'YOU WIN!'
-	}else if(result == 'lose'){
-		drawText = 'YOU LOSE!'
-	}else if(result == 'timeout'){
-		drawText = 'TIME OUT'
-	}else if(result == 'falseStart'){
-		drawText ='FALSE START～フライング～'
-	}
+  if (result ==="win" || result === 'lose') resultSubtext = `${RESULT_SUBTEXT[result]}"${elapsedTime}"`;
 
+  // 初期化
 	ctx.clearRect(0,100,cvs.width,200);
 	eraseRPSButton();
 
@@ -422,16 +439,21 @@ function opponentHandCalc(wodJudge,myHand){
 	await resultAnimation(result);
 	await sleep(200);
 
-	ctx.clearRect(0,100,cvs.width,200);
-	charScroll(drawText,cvs,300,200,0,0,0);
+  cvsFill.backgroundChange();
+  screenFlag = 'wait';
 
-	ctx.font = '30px "M PLUS 10p", sans-serif';
-	ctx.save();
-	renderCharBackground(cvs,100,300,400,60);
-	ctx.restore();
+  renderText.renderFontChange({fontSize : 45});
 
-	ctx.fillText('Click to Replay',300,330)
-	screenFlag = 'wait';
+  await renderText.renderTextAnimation({
+    initElement : initElement,
+    finalElement : finalElement,
+    str : RESULT_TEXT[result]
+  });
+  renderText.renderFontChange({fontSize : 30});
+  console.log(elapsedTime)
+  ctx.fillText(resultSubtext,300,200);
+  ctx.strokeText(resultSubtext,300,200);
+  renderText.renderBlinkClickButton('CLICK to REPLAY');
 
 }
 
@@ -454,9 +476,9 @@ async function resultAnimation(result,voicelessFlag = false){
 	if(voicelessFlag === false) await wolSE();
 }
 
-function resultDraw(){
-	renderChar.player.renderDraw();
-	renderChar.opponent.renderDraw();
+async function resultDraw(){
+  renderChar.player.renderDraw();
+  await renderChar.opponent.renderDraw();
 }
 
 function eraseRPSButton(){

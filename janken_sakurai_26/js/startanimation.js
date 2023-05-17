@@ -28,10 +28,11 @@ const TEXT_FONT_SIZE = [
 *  GSAP用の属性
 *****************************************************************/
 class element{
-  constructor({x,y,opacity}){
+  constructor({x,y,opacity,duration = 1}){
     this.x = x;
     this.y = y;
     this.opacity = opacity;
+    this.duration = duration;
   }
 }
 
@@ -42,7 +43,7 @@ class textAnimation {
   constructor ({cvs}) {
     this.cvs = cvs
     this.ctx = this.cvs.getContext("2d");
-    this.ctx.font = '40px"M PLUS 1p", sans-serif';
+    this.ctx.font = '40px "M PLUS 1p", sans-serif';
     this.i = 0;
     this.timeLine = gsap.timeline();
   }
@@ -67,10 +68,15 @@ class textAnimation {
     });
   }
 
-  reRenderText(textElement){
+  reRenderText(textElement,addStrokeText = false){
     this.ctx.clearRect(0,0,this.cvs.width,this.cvs.height);
     this.ctx.globalAlpha = textElement.opacity;
     this.ctx.fillText(this.str,textElement.x,textElement.y);
+    if (addStrokeText===true) {
+      this.ctx.lineWidth = 1;
+      this.ctx.strokeStyle = '#000000'
+      this.ctx.strokeText(this.str,textElement.x,textElement.y);
+    }
   }
 
   renderFontChange({
@@ -119,7 +125,11 @@ class textAnimation {
     this.ctx.lineTo(410,185);
     this.ctx.stroke();
 
+    this.renderBlinkClickButton('CLICK BUTTON');
 
+  }
+
+  renderBlinkClickButton(str){
     let clickStart = new element({opacity:0})
       const clickTimer = gsap.to(clickStart,{
         opacity : 1,
@@ -129,29 +139,30 @@ class textAnimation {
         ease: "linear",
         repeatDelay:1,
         onUpdate: () => {
-          this.renderClickButton(clickStart);
-          if(screenFlag !== 'title') {
-            this.ctx.clearRect(0,200,this.cvs.width,200);
+          this.renderClickButton(clickStart, str);
+          if(!(screenFlag === 'title' || screenFlag === 'wait')) {
+            this.ctx.clearRect(0,270,this.cvs.width,120);
             clickTimer.kill();
           }
         },
         onComplete: () => {
         }
     });
-
   }
 
-  renderClickButton(clickStart){
-    const str = 'CLICK BUTTON'
-    this.ctx.clearRect(0,200,this.cvs.width,200);
-    this.ctx.globalAlpha = clickStart.opacity;
+  renderClickButton(clickElement,str){
+    this.ctx.clearRect(0,270,this.cvs.width,120);
+    this.ctx.globalAlpha = clickElement.opacity;
     this.renderFontChange({fontSize : 22});
     this.ctx.fillText(str,300,300);
-    // this.ctx.moveTo(210,280);
-    // this.ctx.lineTo(390,280);
-    // this.ctx.moveTo(210,320);
-    // this.ctx.lineTo(390,320);
-    // this.ctx.stroke();
+    //this.ctx.strokeText(str,300,300);
+    this.ctx.strokeStyle = '#ffffff'
+    this.ctx.beginPath();
+    this.ctx.moveTo(210,280);
+    this.ctx.lineTo(390,280);
+    this.ctx.moveTo(210,320);
+    this.ctx.lineTo(390,320);
+    this.ctx.stroke();
   }
 
 }
@@ -189,7 +200,7 @@ class cvsFillRect {
 
   backgroundChange(){
     this.ctx.clearRect(0,0,this.cvs.width,this.cvs.height);
-    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
     this.ctx.fillRect(0,0,this.cvs.width,this.cvs.height);
   }
 }
@@ -213,12 +224,12 @@ async function main(){
   //Logo表示
   await cvsFill.backgroundAnimation({colorCode : '#000000'});
 
-  // for(let i = 0; i < 2; i++){
-  //   if(i !== 0) await sleep(1000);
-  //   textAnime.renderFontChange({fontSize : TEXT_FONT_SIZE[i]});
-  //   textAnime.str = TEXT_LIST[i];
-  //   await textAnime.renderTextAnimation();
-  // }
+  for(let i = 0; i < 2; i++){
+    if(i !== 0) await sleep(1000);
+    textAnime.renderFontChange({fontSize : TEXT_FONT_SIZE[i]});
+    textAnime.str = TEXT_LIST[i];
+    await textAnime.renderTextAnimation();
+  }
 
   //オープニング開始
   renderBackground(cvs.get('background'));
@@ -255,16 +266,6 @@ async function main(){
     await sleep(5000);
     renderBackground(cvs.get('background'));
   }
-
-  let test = new textAnimationRPS({cvs : cvs.get('letter')});
-
-}
-
-
-class textAnimationRPS extends textAnimation{
-  constructor ({cvs}) {
-    super({cvs})
-  }
 }
 
 /****************************************************************
@@ -288,3 +289,8 @@ canvas[CANVAS_NUM].addEventListener("click", e => {
 });
 
 main();
+
+// 動作確認用
+// initVariables();
+// screenFlag = 'run1'
+// RPSMain(cvs.get('letter'));

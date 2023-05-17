@@ -144,3 +144,160 @@ function renderCharacter(cvs,images,reverse=0){
 
 // }
 
+/****************************************************************
+* じゃんけんの合図を出力～結果表示まで
+*****************************************************************/
+// async function RPSMain(cvs) {
+
+// 	const RPSstart01 = new Audio('./audio/SE/RPSstart_01.wav');
+// 	const RPSstart02 = new Audio('./audio/SE/RPSstart_02.wav');
+// 	const RPSstart03 = new Audio('./audio/SE/RPSstart_03.wav');
+// 	const RPSdraw01 = new Audio('./audio/SE/RPSdraw_01.wav');
+// 	const RPSdraw02 = new Audio('./audio/SE/RPSdraw_02.wav');
+// 	const RPSdraw03 = new Audio('./audio/SE/RPSdraw_03.wav');
+
+// 	let falseStartDetect = () => {
+// 		if(winOrLoseFlag === 'falseStart'){
+//     renderPlayerHand(null);
+// 		resultOutput(cvs,winOrLoseFlag);
+// 		return true;
+// 		}
+// 		return false;
+// 	}
+
+//   //初期化
+// 	renderChar.player.idleStop();
+// 	renderChar.opponent.idleStop();
+// 	await sleep(100);
+// 	initVariables();
+
+// 	let RPSRand = Math.trunc(Math.random() * (RPS_START_RAND_RANGE.end - RPS_START_RAND_RANGE.start)) +  RPS_START_RAND_RANGE.start
+// 	await sleep(1500);
+// 	RPSstart01.play();
+// 	await charScroll("じゃん",cvs,40,200,200,0,300);
+// 	await sleep(500);
+// 	RPSstart02.play();
+// 	await charScroll("けん",cvs,560,200,-200,0,300);
+// 	await sleep(RPSRand); //PON!が表示される時間は、ランダムで決定される。
+// 	cvs.getContext("2d").clearRect(0,0,cvs.width,cvs.height);
+// 	if (falseStartDetect() == true) return;
+// 	await charScroll("PON!",cvs,300,200,0,0,0);
+// 	RPSstart03.play();
+// 	renderOpponentHand();
+// 	countTimerStart = performance.now();
+// 	await renderElapsedTime(cvs);
+
+// 	while (drawFlag === true){
+// 		resultDraw();
+// 		await sleep(2000);
+// 		RPSRand = Math.trunc(Math.random() * (RPS_START_RAND_RANGE.end - RPS_START_RAND_RANGE.start)) +  RPS_START_RAND_RANGE.start
+// 		await sleep(1000);
+// 		opponentHandResult = null;
+// 		RPSdraw01.play();
+// 		await charScroll("あい",cvs,40,200,200,0,300);
+// 		await sleep(500);
+// 		RPSdraw02.play();
+// 		await charScroll("こで",cvs,560,200,-200,0,300);
+// 		await sleep(RPSRand); //PON!が表示される時間は、ランダムで決定される。
+// 		cvs.getContext("2d").clearRect(0,0,cvs.width,cvs.height);
+// 		if (falseStartDetect() == true) return;
+// 		await charScroll("SYO!",cvs,300,200,0,0,0);
+// 		RPSdraw03.play();
+//     renderPlayerHand(null);
+// 		drawFlag = null;
+// 		renderOpponentHand();
+// 		countTimerStart = performance.now();
+// 		await renderElapsedTime(cvs);
+// 	}
+
+// 	resultOutput(cvs,winOrLoseFlag);
+
+// }
+
+
+// function renderElapsedTime(cvs){
+// 	return new Promise(resolve => {
+// 		let ctx =  cvs.getContext("2d");
+// 		let count = 0;
+// 		let elapsedTime = 0;
+// 		let clearFlag = 0;
+// 		let countMax = RPS_LOSE_TIME * 1/ STANDARD_INTERVAL;
+// 		ctx.font =   '30px "M PLUS 10p", sans-serif';
+// 		ctx.fillStyle = 'white';
+// 		ctx.textBaseline = 'top';
+// 		ctx.textAlign = 'right';
+
+// 		// console.log(countMax);
+// 		let elapsedTimer = setInterval(() => {
+// 		ctx.clearRect(200,0,300,150);
+// 		// renderCharBackground(cvs,25,40,105,50);
+// 		renderCharBackground(cvs,245,20,105,50);
+// 		ctx.fillStyle = 'white';
+// 		elapsedTime = mathTime(performance.now() - countTimerStart);
+// 		// ctx.fillText(elapsedTime,120,50)
+// 		if (elapsedTime > 1 && clearFlag === 0){
+// 			ctx.clearRect(0,0,cvs.width,cvs.height);
+// 			clearFlag = 1;
+// 		}
+// 		ctx.fillText(elapsedTime,340,30)
+// 		count ++;
+// 		if (count >= countMax || opponentHandResult !== null){
+// 			if(count >= countMax) {
+// 				winOrLoseFlag = 'timeout';
+// 			}
+// 			clearInterval(elapsedTimer);
+// 			resolve();
+// 		}
+// 		},STANDARD_INTERVAL);
+// 	});
+// 	}
+
+/****************************************************************
+* 所定の位置から所定の位置まで文字をスクロールする(表示文字列,キャンバス要素,初期位置x,y,移動距離x,y,秒数)
+*****************************************************************/
+// function charScroll(outputChar,cvs,initPosX,initPosY,moveX,moveY,animationDuration){
+// 	return new Promise(resolve => {
+// 		let ctx = cvs.getContext("2d");
+// 		ctx.font =   '40px "M PLUS 10p", sans-serif';
+// 		ctx.fillStyle = 'white';
+// 		ctx.textBaseline = 'middle';
+// 		ctx.textAlign = 'center';
+
+// 		let count = 0;
+// 		let countMax = animationDuration * 1/ STANDARD_INTERVAL;
+// 		// console.log(countMax);
+// 		let movePerCountX = moveX / countMax;
+// 		let movePerCountY = moveY / countMax;
+
+// 		if (animationDuration === 0){
+// 		renderCharBackground(cvs,0,cvs.height * 3/8,cvs.width,cvs.height / 4);
+// 		ctx.fillStyle = 'white';
+// 		ctx.fillText(outputChar,initPosX,initPosY)
+// 		return resolve();
+// 		}
+
+
+// 		let charScrollTimer = setInterval(() => {
+
+// 		ctx.clearRect(0,0,cvs.width,cvs.height);
+// 		// clearCanvas(cvs,range)
+// 		renderCharBackground(cvs,0,cvs.height * 3/8,cvs.width,cvs.height / 4);
+// 		ctx.fillStyle = 'white';
+// 		ctx.fillText(outputChar,initPosX + count * movePerCountX,initPosY + count * movePerCountY)
+// 		count ++;
+// 		if (count >= countMax){
+// 			clearInterval(charScrollTimer);
+// 			resolve();
+// 		}
+// 		},STANDARD_INTERVAL);
+// 	});
+// }
+
+/****************************************************************
+* 文字を見やすくするために、文字のバックグラウンドを黒透過で表示
+*****************************************************************/
+// function renderCharBackground(cvs,startX,startY,width,height){
+// 	let ctx =  cvs.getContext("2d");
+// 	ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+// 	ctx.fillRect(startX,startY,width,height)
+// }

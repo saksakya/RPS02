@@ -7,7 +7,7 @@
 // 勝ち負けの判定確率(デフォルト)
 const RPS_JUDGE_RANGE = {
   win:333,
-  draw:33333,
+  draw:333,
   lose:333,
 }
 RPS_JUDGE_RANGE.all = RPS_JUDGE_RANGE.win + RPS_JUDGE_RANGE.draw + RPS_JUDGE_RANGE.lose;
@@ -54,6 +54,28 @@ const RPS_IMAGE_POS = [
   {startX:540,startY:520,width:400,height:400},
   {startX:1030,startY:520,width:400,height:400},
 ];
+
+// じゃんけんの合図
+const RPS_SIGN =[
+  ['じゃん','けん','PON!'],
+  ['あい','こで','SYO!']
+]
+
+// 勝敗の文字列
+const RESULT_TEXT ={
+  win : 'YOU WIN!',
+  lose : 'YOU LOSE!',
+  timeout : 'TIME OUT',
+  falseStart : 'TOO FAST'
+}
+
+// 勝敗のサブ文字列
+const RESULT_SUBTEXT ={
+  win : 'Your reaction time is ',
+  lose : 'Your reaction time is ',
+  timeout : 'Are you serious?',
+  falseStart : 'improve your reflexes'
+}
 
 // HTMLのcanvas要素
 const canvas = document.querySelectorAll("canvas");
@@ -153,6 +175,7 @@ class renderSpriteImage extends renderImage{
 *  グローバル変数の使用はできれば避けたい。
 *****************************************************************/
 let countTimerStart = null; //タイマーの開始***カウント開始前のクリックを判定するために必要***
+let elapsedTime = 0; //タイマーを後で描画するために情報保持
 let opponentHandResult = null; //決定した相手の手***相手の手の回転を止める位置を判定するために必要***
 let winOrLoseFlag = null; //勝敗フラグ***勝敗決定時に各関数のタイマに割り込むために必要***
 let drawFlag = null; //ドローフラグ***ドロー時に各関数のタイマに割り込みために必要***
