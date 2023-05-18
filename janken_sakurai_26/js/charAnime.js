@@ -221,7 +221,7 @@ class renderSpriteAnime extends renderSpriteImage{
   }
 
   //speed初期値は500ms秒で、1画像切り替わり
-  anime(speed = 500){
+  anime(speed = 210 * DISPLAY_REFRESH_RATE){
     this.count = 0;
     this.calculateRepeatMag(speed);
     return new Promise(resolve => {
@@ -265,7 +265,7 @@ class renderSpriteAnimeMove extends renderSpriteAnime{
     this.clearRange = clearRange;
   }
 
-  anime(speed = 500){ //y軸移動は未実装
+  anime(speed = 210 * DISPLAY_REFRESH_RATE){ //y軸移動は未実装
     this.count = 0;
     this.calculateRepeatMag(speed);
     this.moveCount = 0;//他に流用する場合、移動速度の調整が必要
@@ -278,12 +278,12 @@ class renderSpriteAnimeMove extends renderSpriteAnime{
         this.render();
         this.count ++;
         this.moveCount ++;
-        this.renderPos.x += 5; //他に流用する場合、移動速度の調整が必要
+        this.renderPos.x += 12 / DISPLAY_REFRESH_RATE; //他に流用する場合、移動速度の調整が必要
 
         if(this.count > this.totalNumber * this.repeatMag - 1 ){
           this.count = 0;
         }
-        if(this.moveCount * 5 > this.move.x){
+        if(this.moveCount * 12 / DISPLAY_REFRESH_RATE > this.move.x){
           this.ctx.clearRect(this.clearRange,0,this.cvs.width,this.cvs.height);
           return resolve();
         }
@@ -353,9 +353,9 @@ class countessVampire{
   }
 
   async attack(){
-    await this.attackEmote.anime(200);
+    await this.attackEmote.anime(85 * DISPLAY_REFRESH_RATE);
     if(this.voicelessFlag === false) this.attackSE.play();
-    await this.attackEffect.anime(100);
+    await this.attackEffect.anime(42 * DISPLAY_REFRESH_RATE);
   }
 
   async renderAttack(){
@@ -373,7 +373,7 @@ class countessVampire{
 
   async renderDead(){
     if(this.voicelessFlag === false) this.screamSE.play();
-    await this.dead.anime(400);
+    await this.dead.anime(165 * DISPLAY_REFRESH_RATE);
   }
 
 }
@@ -427,7 +427,7 @@ class wondererMagician extends countessVampire{
 
   async renderDead(){
     if(this.voicelessFlag === false) this.screamSE.play();
-    await this.dead.anime(800);
+    await this.dead.anime(333 * DISPLAY_REFRESH_RATE);
   }
 
 }
@@ -488,9 +488,9 @@ class samurai extends countessVampire{
   }
 
   async attack(){
-    await this.run.anime(100);
+    await this.run.anime(42 * DISPLAY_REFRESH_RATE);
     if(this.voicelessFlag === false) this.attackSE.play();
-    await this.attackEmote.anime(300);
+    await this.attackEmote.anime(125 * DISPLAY_REFRESH_RATE);
   }
 
   async renderAttack(){
@@ -500,12 +500,12 @@ class samurai extends countessVampire{
   async renderDraw(){
     await sleep(1000);
     if(this.voicelessFlag === false) this.attackSE.play();
-    await this.protection.anime(500);
+    await this.protection.anime(210 * DISPLAY_REFRESH_RATE);
   }
 
   async renderDead(){
     if(this.voicelessFlag === false) this.screamSE.play();
-    await this.dead.anime(400);
+    await this.dead.anime(167 * DISPLAY_REFRESH_RATE);
   }
 
 }
