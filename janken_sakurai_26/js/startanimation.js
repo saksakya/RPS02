@@ -49,7 +49,7 @@ class textAnimation {
   }
 
   renderTextAnimation(){
-    let textElement = new element({x:300,y:205,opacity:0})
+    let textElement = new element({x:300,y:200,opacity:0})
     return new Promise(resolve => {
       this.timeLine.to(textElement,{
         y:200,
@@ -178,17 +178,16 @@ class cvsFillRect {
     this.timeLine = gsap.timeline();
   }
 
-  backgroundAnimation({colorCode}){
-    let BGElement = new element({opacity:0})
+  backgroundAnimation({colorCode,startElement,endElement}){
     this.ctx.fillStyle = colorCode;
 
     return new Promise(resolve => {
-      this.timeLine.to(BGElement,{
-        opacity : 1,
-        duration : 1,
+      this.timeLine.to(startElement,{
+        opacity : endElement.opacity,
+        duration : endElement.duration,
         onUpdate: () => {
           this.ctx.clearRect(0,0,this.cvs.width,this.cvs.height);
-          this.ctx.globalAlpha = BGElement.opacity;
+          this.ctx.globalAlpha = startElement.opacity;
           this.ctx.fillRect(0,0, this.cvs.width, this.cvs.height);
         },
         onComplete: () => {
@@ -222,7 +221,11 @@ async function main(){
   let cvsFill = new cvsFillRect({cvs : cvs.get('button')})
 
   //Logo表示
-  await cvsFill.backgroundAnimation({colorCode : '#000000'});
+  await cvsFill.backgroundAnimation({
+    colorCode : '#000000',
+    startElement : {opacity:0},
+    endElement : {opacity : 1, duration:1}
+  });
 
   for(let i = 0; i < 2; i++){
     if(i !== 0) await sleep(1000);
@@ -234,7 +237,13 @@ async function main(){
   //オープニング開始
   renderBackground(cvs.get('background'));
   //await sleep(1000);
-  cvsFill.backgroundChange();
+  cvsFill.backgroundAnimation({
+    colorCode : '#000000',
+    startElement : {opacity:1},
+    endElement : {opacity : 0.2, duration:1}
+  });
+
+  sleep(500);
   if(bgm.paused) bgm.play();
 
   //タイトル画面描写

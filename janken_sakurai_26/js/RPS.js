@@ -13,7 +13,7 @@ battleBGM.volume = 0.4 *  Master_BGM;
 class scrollText extends textAnimation{
 	constructor ({cvs}) {
     super({cvs})
-  }
+	}
 
   renderTextAnimation({initElement,finalElement,str}){
     return new Promise(resolve => {
@@ -212,7 +212,7 @@ async function RPSMain(cvs){
       rpsSE[signNumber][i].play();
       renderScrollText.renderFontChange({fontSize : 40});
       await renderScrollText.renderTextAnimation({
-        initElement:initElement[i],
+        initElement:Object.assign({},initElement[i]),
         finalElement:finalElement[i],
         str:RPS_SIGN[signNumber][i]
       });
@@ -425,10 +425,10 @@ function opponentHandCalc(wodJudge,myHand){
   let renderText = new scrollText({cvs : cvs});
   let cvsFill = new cvsFillRect({cvs : canvas[4]});
   let initElement = new element({x:300,y:150,opacity:0});
-  let finalElement = new element({x:300,y:150,opacity:1});
+  let finalElement = new element({x:300,y:150,opacity:1,duration:0.5});
   let resultSubtext = RESULT_SUBTEXT[result];
 
-  if (result ==="win" || result === 'lose') resultSubtext = `${RESULT_SUBTEXT[result]}"${elapsedTime}"`;
+  if (result ==="win" || result === 'lose') resultSubtext = `${RESULT_SUBTEXT[result]}${elapsedTime}`;
 
   // 初期化
 	ctx.clearRect(0,100,cvs.width,200);
@@ -449,6 +449,9 @@ function opponentHandCalc(wodJudge,myHand){
     finalElement : finalElement,
     str : RESULT_TEXT[result]
   });
+
+	if(screenFlag !=='wait') return;
+	
   renderText.renderFontChange({fontSize : 30});
   console.log(elapsedTime)
   ctx.fillText(resultSubtext,300,200);
@@ -521,6 +524,7 @@ function initVariables(){
 
 	//canvas描画リセット
 	for(let value of cvs.values()){
+		value.getContext("2d").globalAlpha = 1;
 		value.getContext("2d").clearRect(0,0,value.width,value.height);
 	}
 
