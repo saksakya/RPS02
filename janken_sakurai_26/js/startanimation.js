@@ -227,12 +227,12 @@ async function main(){
     endElement : {opacity : 1, duration:1}
   });
 
-  // for(let i = 0; i < 2; i++){
-  //   if(i !== 0) await sleep(1000);
-  //   textAnime.renderFontChange({fontSize : TEXT_FONT_SIZE[i]});
-  //   textAnime.str = TEXT_LIST[i];
-  //   await textAnime.renderTextAnimation();
-  // }
+  for(let i = 0; i < 2; i++){
+    if(i !== 0) await sleep(1000);
+    textAnime.renderFontChange({fontSize : TEXT_FONT_SIZE[i]});
+    textAnime.str = TEXT_LIST[i];
+    await textAnime.renderTextAnimation();
+  }
 
   //オープニング開始
   renderBackground(cvs.get('background'));
